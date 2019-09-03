@@ -5,4 +5,5 @@ function love.conf(t)
     t.title = "my first love"
     t.window.width = 360
     t.window.height = 240
+    t.console = true
 end
