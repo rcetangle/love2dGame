@@ -13,6 +13,7 @@ function Tile:ctor(texture, state, x, y, idx, idy)
     self.texture = self.initTecture
     self.idx = idx -- row index
     self.idy = idy -- col index
+    self.property = nil
 
     if state < 0 then
         self.state = TileState.NONE
@@ -27,9 +28,31 @@ function Tile:draw()
     love.graphics.draw(self.texture, self.x, self.y)
 end
 
+-- can put property on the tile
+function Tile:canPutProperty()
+    return not self.property and (self.state == TileState.BLACK or self.state == TileState.LIGHTEN)
+end
+
 -- is the tile is walkable
 function Tile:canWalk()
     return self.state == TileState.LIGHT
+end
+
+-- is the tile searchable
+function Tile:canSearch()
+    return self.state == TileState.BLACK or self.state == TileState.LIGHTEN
+end
+
+-- is the tile lightenable
+function Tile:canLighten()
+    return self.state == TileState.BLACK 
+end
+
+-- put a property
+function Tile:putProperty(property)
+    self.property = property
+    self.property.x = self.x
+    self.property.y = self.y
 end
 
 -- move the tile
