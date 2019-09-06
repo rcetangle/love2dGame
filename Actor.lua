@@ -1,10 +1,10 @@
 local Actor = class("Actor")
 
-function Actor:ctor(texture, state, params)
-    self.texture = texture
+function Actor:ctor(state, params)
+    self.texture = eh_ActorTexture[state]
     self.state = state
-    self.x = 0
-    self.y = 0
+    self.x = 44
+    self.y = 44
 
     -- other config
     self.frames = params.frames
@@ -28,7 +28,7 @@ end
 -- for detective, lighten the tile
 -- return true when the tile is searchable/lightenable
 function Actor:searchTile(tile)
-    if not self:hasMoves() return false end
+    if not self:hasMoves() then return false end
     if self.state == 1 and tile:canLighten() then
         self:reduceMoves()
         tile:lighten()

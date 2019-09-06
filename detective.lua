@@ -1,4 +1,5 @@
 local Tile = require(".Tile")
+local Actor = require(".Actor")
 local Detective = class("Detective", require(".earth_scene"))
 
 -- tiles map
@@ -18,37 +19,106 @@ local map = {
 local size = 44
 
 function Detective:load()
-    self.txt = ""
-
-    self.imgs = {
+    -- global params
+    eh_TileTexture = {
+        -- floors
         love.graphics.newImage("res/earth/0.png"),
         love.graphics.newImage("res/earth/1.png"),
+        love.graphics.newImage("res/earth/2.png"),
+
+        -- walls
         love.graphics.newImage("res/earth/wall_5.png"),
         love.graphics.newImage("res/earth/wall_4.png"),
         love.graphics.newImage("res/earth/wall_3.png"),
         love.graphics.newImage("res/earth/wall_2.png"),
         love.graphics.newImage("res/earth/wall_1.png"),
     }
+    eh_FurnitureTexture = {
+        -- furniture
+        {
+            love.graphics.newImage("res/earth/closet_f.png"), 
+            love.graphics.newImage("res/earth/closet_l.png"), 
+            love.graphics.newImage("res/earth/closet_b.png"), 
+        },
+        {
+            love.graphics.newImage("res/earth/2Closet_f.png"),  
+            love.graphics.newImage("res/earth/2Closet_l.png"), 
+            love.graphics.newImage("res/earth/2Closet_b.png"), 
+        },
+        {
+            love.graphics.newImage("res/earth/chair_f.png"),
+            love.graphics.newImage("res/earth/chair_l.png"),
+            love.graphics.newImage("res/earth/chair_b.png"),
+        },
+        love.graphics.newImage("res/earth/bed_f.png"),
+        love.graphics.newImage("res/earth/bed_l.png"),
+        love.graphics.newImage("res/earth/bed_b.png"),
+        love.graphics.newImage("res/earth/4Closet_f.png"), 
+        love.graphics.newImage("res/earth/4Closet_l.png"), 
+        love.graphics.newImage("res/earth/4Closet_b.png"), 
 
+        -- decoration
+        love.graphics.newImage("res/earth/bigPic.png"),
+        love.graphics.newImage("res/earth/smallPic.png"),
+        love.graphics.newImage("res/earth/clock.png"),
+        love.graphics.newImage("res/earth/door.png"),
+        love.graphics.newImage("res/earth/door2.png"),
+        love.graphics.newImage("res/earth/carpet.png"),
+    }
+    eh_ActorTexture = {
+        love.graphics.newImage("res/earth/detective.png"),
+        love.graphics.newImage("res/earth/thife.png"),
+    }
+
+
+    self.txt = ""
     self:initTilesMap()
+    self:initFurniture()
+    self:initActors()
 end
 
 function Detective:initTilesMap()
-    self.mapHeight = #map*size
-    self.mapWidth = #map[1]*size-32
     self.mapLeft = 0
     self.mapTop = 0
     self.tiles = {}
+    local lastY = 0
+    local lastX = 0
     for i, v in ipairs(map) do
         self.tiles[i] = {}
+        lastX = 0
         for j, w in ipairs(v) do
-            if w < 0 and w > -100 then
-                self.tiles[i][j] = Tile.new(self.imgs[#self.imgs+w+1], w, -32+size*(j-1), size*(i-1))
-            elseif w >= 0 then
-                self.tiles[i][j] = Tile.new(self.imgs[w+1], w, -32+size*(j-1), size*(i-1))
+            self.tiles[i][j] = Tile.new(w+1, lastX, lastY, i, j)
+
+            if j < #v then
+                lastX = lastX + ((w <= -3 and w >= -5) and 21 or size)
             end
         end
+        lastY = lastY + size
     end
+    self.mapWidth = lastX
+    self.mapHeight = lastY
+end
+
+function Detective:initFurniture()
+    self.furniture = {}
+end
+
+function Detective:initActors()
+    self.actors = {}
+
+    -- detective
+    self.actors[1] = Actor.new(1, {
+        moves = 4, 
+        property = 1
+    })
+
+    -- thief
+    self.actors[2] = Actor.new(2, {
+        moves = 3, 
+        property = 1
+    })
+
+    self.currentActor = self.actors[1]
 end
 
 function Detective:moveCamera(ox, oy)
@@ -57,9 +127,13 @@ function Detective:moveCamera(ox, oy)
 
     -- x direction
     local tmpLeft = self.mapLeft + ox
-    if tmpLeft > 0 
-        or tmpLeft + self.mapWidth <= eh_screen.width then
-        return
+    if tmpLeft + self.mapWidth <= eh_screen.width then
+        tmpLeft = eh_screen.width - self.mapWidth
+        ox = tmpLeft - self.mapLeft
+    end
+    if tmpLeft > 0 then
+        tmpLeft = 0
+        ox = tmpLeft - self.mapLeft
     end
 
     -- y direction
@@ -94,12 +168,27 @@ function Detective:moveCamera(ox, oy)
     -- move actors
 end
 
+function Detective:shiftActor()
+    for i, v in ipairs(self.actors) do
+        if v ~= self.currentActor then
+            self.currentActor = v
+            break
+        end
+    end
+end
+
 function Detective:update()
     if not self:isRunning() then return end
 end
 
 function Detective:draw()
     if not self:isRunning() then return end
+
+    -- shiftint actor
+    if self.shiftClicked then 
+        love.graphics.print("shift to another player...\npress space again when shifting finished.")
+        return 
+    end
 
     -- draw tiles
     for i, v in ipairs(self.tiles) do
@@ -108,11 +197,23 @@ function Detective:draw()
         end
     end
 
+    -- draw furniture
+    for i, fur in ipairs(self.furniture) do
+        fur:draw()
+    end
+
+    -- draw actor
+    if self.currentActor then
+        self.currentActor:draw()
+    end
 
     -- draw txt
     love.graphics.print(self.txt, 0, 0)
 end
 
+
+
+------- key events
 function Detective:keypressed(key)
     self.txt = "pressed "..key
 end
@@ -126,6 +227,13 @@ function Detective:keyreleased(key)
         self:moveCamera(1, 0)
     elseif key == "right" then
         self:moveCamera(-1, 0)
+    elseif key == "space" then
+        if not self.shiftClicked then
+            self.shiftClicked = true
+            self:shiftActor()
+        else
+            self.shiftClicked = false
+        end
     end
 end
 

@@ -19,7 +19,7 @@ local eh_sceneList = {
     -- ".Scenario", 
     -- ".ChooseGame", 
     ".detective",
-    ".Scenario"
+    -- ".Scenario"
 }
 local eh_index = 0
 function earth_go2NextScene()
@@ -78,10 +78,10 @@ end
 function love.quit()
 end
 
--- -- called when a mouse button is pressed
--- function love.mousepressed(x, y, btn, istouch)
--- end
+-- called when a mouse button is pressed
+function love.mousepressed(x, y, btn, istouch)
+end
 
--- -- called when a mouse button is released
--- function love.mousereleased(x, y, btn, istouch)
--- end
+-- called when a mouse button is released
+function love.mousereleased(x, y, btn, istouch)
+end
