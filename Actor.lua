@@ -3,8 +3,10 @@ local Actor = class("Actor")
 function Actor:ctor(state, params)
     self.texture = eh_ActorTexture[state]
     self.state = state
-    self.x = 44
-    self.y = 44
+    self.row = params.row or 0
+    self.col = params.col or 0
+    self.x = params.x or 0
+    self.y = params.y or 0
 
     -- other config
     self.frames = params.frames
@@ -19,7 +21,9 @@ function Actor:draw()
 end
 
 -- move the actor
-function Actor:move(ox, oy)
+function Actor:move(ox, oy, oRow, oCol)
+    self.row = self.row + oRow
+    self.col = self.col + oCol
     self.x = self.x + ox
     self.y = self.y + oy
 end

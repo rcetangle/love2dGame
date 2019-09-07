@@ -2,16 +2,16 @@ local Tile = class("Tile")
 
 local TileState = {
     NONE = 0, -- the wall tile, unwalkable
-    BLACK = 1, -- the black tile, unwalkable
-    LIGHTEN = 2, -- the tile is lighten by detector, unwalkable
+    BLACK = 1, -- the black tile, walkable
+    LIGHTEN = 2, -- the tile is lighten by detector, walkable
     LIGHT = 3, -- the light tile, walkable
 }
 
-function Tile:ctor(state, x, y, idx, idy)
+function Tile:ctor(state, x, y, row, col)
     self.x = x
     self.y = y
-    self.idx = idx -- row index
-    self.idy = idy -- col index
+    self.row = row -- row index
+    self.col = col -- col index
     self.property = nil
 
     if state <= TileState.NONE then
@@ -29,7 +29,7 @@ end
 function Tile:draw()
     if not self.texture then return end
     love.graphics.draw(self.texture, self.x, self.y)
-    -- love.graphics.print(self.idx..","..self.idy, self.x, self.y)
+    love.graphics.print(self.row..","..self.col, self.x, self.y)
 end
 
 -- can put property on the tile
@@ -39,7 +39,7 @@ end
 
 -- is the tile is walkable
 function Tile:canWalk()
-    return self.state == TileState.LIGHT
+    return self.state ~= TileState.NONE
 end
 
 -- is the tile searchable
