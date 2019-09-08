@@ -261,7 +261,7 @@ function Detective:moveActor(oCol, oRow)
                 return
             end
             facingProperty:move(oCol*size, oRow*size, oRow, oCol)
-            -- self.currentActddor:reduceMoves()
+            self.currentActor:reduceMoves()
         end
     end
 
@@ -339,36 +339,20 @@ function Detective:moveCamera(oCol, oRow)
 end
 
 function Detective:shiftActor()
-    -- 记录当前摄像机的位置
-    local lastMapLeft = self.lastMapLeft
-    local lastMapTop = self.lastMapTop
-    self.lastMapLeft = self.mapLeft
-    self.lastMapTop = self.mapTop
+    -- change the current actor to another
+    local lastActor = self.currentActor
     for i, v in ipairs(self.actors) do
         if v ~= self.currentActor then
             self.currentActor = v
+            self.currentActor:resetMoves()
             break
         end
     end
-    -- -- 把上一轮的摄像机位置还原
-    -- -- 如果没有上一轮的摄像机位置，就用角色的当前位置来定
-    -- if not lastMapLeft then
-    --     lastMapLeft = self.currentActor.x
-    -- end
-    -- if not lastMapTop then
-    --     lastMapTop = self.currentActor.y
-    -- end
-    -- -- 以摄像机位置为坐标原点，计算所有坐标的位置
-    -- -- tiles
-    -- for i, v in ipairs(self.tiles) do
-    --     for j, tile in ipairs(v) do
-    --         tile.x = tile.x - lastMapLeft
-    --         tile.y = tile.y - lastMapTop
-    --     end
-    -- end
-    -- properties
-    -- actors
-    self.currentActor:resetMoves()
+    -- calculate the offset
+    local oRow = lastActor.row - self.currentActor.row
+    local oCol = lastActor.col - self.currentActor.col
+    -- move the camera
+    self:moveCamera(oCol, oRow)
 end
 
 
