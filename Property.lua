@@ -47,4 +47,20 @@ function BaseProperty:containsTile(row, col)
         and col - self.col < self.width
 end
 
+function BaseProperty:getEdges(oRow, oCol)
+    local ret = {}
+    if oRow == 0 then -- x direction
+        local col = oCol < 0 and self.col or self.col+self.width-1
+        for i = 1, self.height do
+            table.insert(ret, {self.row-i+1, col+oCol})
+        end
+    elseif oCol == 0 then
+        local row = oRow < 0 and self.row-self.height+1 or self.row
+        for i = 1, self.width do
+            table.insert(ret, {row+oRow, self.col+i-1})
+        end
+    end
+    return ret
+end
+
 return BaseProperty

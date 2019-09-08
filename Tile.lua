@@ -37,6 +37,11 @@ function Tile:canPutProperty()
     return not self.property and (self.state == TileState.BLACK or self.state == TileState.LIGHTEN)
 end
 
+-- can put furniture on the tile
+function Tile:canPutFurniture()
+    return self.state == TileState.LIGHT
+end
+
 -- is the tile is walkable
 function Tile:canWalk()
     return self.state ~= TileState.NONE

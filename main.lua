@@ -8,8 +8,8 @@ eh_screen.width = 320
 eh_screen.height = 240
 eh_screen.cx = eh_screen.width/2
 eh_screen.cy = eh_screen.height/2
-eh_screen.quanterRect = {eh_screen.width/4, eh_screen.height/4, 
-    eh_screen.width-eh_screen.width/4, eh_screen.height-eh_screen.height/4}
+eh_screen.quanterRect = {eh_screen.width/3, eh_screen.height/3, 
+    eh_screen.width-eh_screen.width/3, eh_screen.height-eh_screen.height/3}
 eh_screen.left = 0
 eh_screen.top = 0
 eh_screen.right = eh_screen.width

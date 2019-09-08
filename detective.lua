@@ -190,16 +190,41 @@ function Detective:initActors()
     self.currentActor = self.actors[1]
 end
 
+-- check the property can move 2 tile
+function Detective:isPropertyCanMove2Tile(property, oRow, oCol)
+    -- check the next tile that actor is going is walkable
+    -- if not, return
+    local arr = property:getEdges(oRow, oCol)
+    for i, v in ipairs(arr) do
+        -- eh_append2Output(string.format("edge %d,%d (%d,%d)", v[1], v[2], oRow, oCol))
+        local rows = self.tiles[v[1]]
+        local nextTile = rows and rows[v[2]]
+        if not nextTile or not nextTile:canPutFurniture() then
+            -- eh_append2Output("tile is can not put property")
+            return false
+        end
+
+        local nextProperty = nil
+        for i, v in ipairs(self.furniture) do
+            if v:containsTile(nextTile.row, nextTile.col) then
+                -- eh_append2Output(string.format("has property %d,%d", nextTile.row, nextTile.row))
+                return false
+            end
+        end
+    end
+    return true
+end
+
 function Detective:moveActor(oCol, oRow)
     -- check the next tile that actor is going is walkable
     -- if not, return
     local rows = self.tiles[self.currentActor.row+oRow]
     local nextTile = rows and rows[self.currentActor.col+oCol]
     if not nextTile or not nextTile:canWalk() then
-        eh_append2Output("tile is not walkable")
+        -- eh_append2Output("tile is not walkable")
         return
     end
-
+    
     local nextProperty = nil
     for i, v in ipairs(self.furniture) do
         if v:containsTile(nextTile.row, nextTile.col) then
@@ -212,7 +237,7 @@ function Detective:moveActor(oCol, oRow)
         -- change facing direction
         self.currentActor:changeDirection(oRow, oCol)
         if not self.pressedA or not self.currentActor:hasMoves() then
-            eh_append2Output("cannot walk through the property")
+            -- eh_append2Output("cannot walk through the property")
             return
         end
     end
@@ -232,6 +257,9 @@ function Detective:moveActor(oCol, oRow)
             end
         end
         if facingProperty then
+            if not self:isPropertyCanMove2Tile(facingProperty, oRow, oCol) then
+                return
+            end
             facingProperty:move(oCol*size, oRow*size, oRow, oCol)
             -- self.currentActddor:reduceMoves()
         end
@@ -285,7 +313,7 @@ function Detective:moveCamera(oCol, oRow)
 
     self.mapLeft = tmpLeft
     self.mapTop = tmpRight
-    eh_append2Output(string.format("mapLeft:%d top:%d wid:%d hit:%d", self.mapLeft, self.mapTop, self.mapWidth, self.mapHeight))
+    -- eh_append2Output(string.format("mapLeft:%d top:%d wid:%d hit:%d", self.mapLeft, self.mapTop, self.mapWidth, self.mapHeight))
 
     -- move tiles
     for i, v in ipairs(self.tiles) do
