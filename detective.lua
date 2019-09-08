@@ -1,5 +1,6 @@
 local Tile = require(".Tile")
 local Actor = require(".Actor")
+local Property = require(".Property")
 local Detective = class("Detective", require(".earth_scene"))
 
 -- tiles map
@@ -16,6 +17,14 @@ local map = {
     {-4,1,1,1,1,1,1,1,1,1,1},
 }
 
+local propertyMap = {
+    {row=6, col = 3, name="closet"},
+    {row=8, col = 4, name="closet2", frame=2, sy=-1},
+    {row=8, col = 8, name="bed"},
+    {row=1, col= 4, name="decoration"},
+    {row=2, col= 6, name="decoration", frame=4},
+    {row=5, col= 5, name="decoration", frame=6},
+}
 local size = 44
 
 function Detective:load()
@@ -35,50 +44,55 @@ function Detective:load()
     }
     eh_FurnitureCfg = {
         -- furniture
-        {
-            width = 1, height = 1, state = "TURN_N_MOVE",
-            closet = {
+        closet = {
+            state = "TURN_N_MOVE",
+            frames = {
                 love.graphics.newImage("res/earth/closet_f.png"), 
                 love.graphics.newImage("res/earth/closet_l.png"), 
-                love.graphics.newImage("res/earth/closet_b.png"), 
-            },
-            closet2 =  {
-                love.graphics.newImage("res/earth/2Closet_f.png"),  
-                love.graphics.newImage("res/earth/2Closet_l.png"), 
-                love.graphics.newImage("res/earth/2Closet_b.png"), 
+                love.graphics.newImage("res/earth/closet_b.png")
             }
-            chair = {
-                love.graphics.newImage("res/earth/chair_f.png"),
-                love.graphics.newImage("res/earth/chair_l.png"),
-                love.graphics.newImage("res/earth/chair_b.png"),
+        },
+        closet2 =  {
+            state = "TURN_N_MOVE",
+            frames = {
+            love.graphics.newImage("res/earth/2Closet_f.png"),  
+            love.graphics.newImage("res/earth/2Closet_l.png"), 
+            love.graphics.newImage("res/earth/2Closet_b.png"), 
             }
-        }
-        {
+        },
+        chair = {
+            state = "TURN_N_MOVE",
+            frames = {
+            love.graphics.newImage("res/earth/chair_f.png"),
+            love.graphics.newImage("res/earth/chair_l.png"),
+            love.graphics.newImage("res/earth/chair_b.png"),
+            }
+        },
+        bed = {  
             width = 2, height = 2, state = "MOVE",
-            bed = {
-                love.graphics.newImage("res/earth/bed_f.png"),
-                love.graphics.newImage("res/earth/bed_l.png"),
-                love.graphics.newImage("res/earth/bed_b.png"),
-            },
-            closet3 = {
-                love.graphics.newImage("res/earth/4Closet_f.png"),
-                love.graphics.newImage("res/earth/4Closet_l.png"),
-                love.graphics.newImage("res/earth/4Closet_b.png"),
+            frames = {
+            love.graphics.newImage("res/earth/bed_f.png"),
+            love.graphics.newImage("res/earth/bed_l.png"),
+            love.graphics.newImage("res/earth/bed_b.png"),
+            }
+        },
+        closet3 = {
+            width = 2, height = 2, state = "MOVE",
+            frames = {
+            love.graphics.newImage("res/earth/4Closet_f.png"),
+            love.graphics.newImage("res/earth/4Closet_l.png"),
+            love.graphics.newImage("res/earth/4Closet_b.png"),
             }
         },
         -- decoration
-        {
-            wall = {
-                love.graphics.newImage("res/earth/bigPic.png"),
-                love.graphics.newImage("res/earth/smallPic.png"),
-                love.graphics.newImage("res/earth/clock.png"),
-                love.graphics.newImage("res/earth/door.png"),
-                love.graphics.newImage("res/earth/door2.png"),
-            },
-            floor {
-                love.graphics.newImage("res/earth/carpet.png"),
-            }
-        },
+        decoration = {
+            love.graphics.newImage("res/earth/bigPic.png"),
+            love.graphics.newImage("res/earth/smallPic.png"),
+            love.graphics.newImage("res/earth/clock.png"),
+            love.graphics.newImage("res/earth/door.png"),
+            love.graphics.newImage("res/earth/door2.png"),
+            love.graphics.newImage("res/earth/carpet.png"),
+        }
     }
 
     eh_ActorTexture = {
@@ -114,6 +128,20 @@ end
 
 function Detective:initFurniture()
     self.furniture = {}
+    self.decoration = {}
+    for i, v in ipairs(propertyMap) do
+        local dt = {}
+        table.merge(dt, eh_FurnitureCfg[v.name])
+        table.merge(dt, v)
+        dt.texture = dt.frames and dt.frames[v.frame or 1] or dt[v.frame or 1]
+        dt.x = self.tiles[v.row][v.col].x
+        dt.y = self.tiles[v.row][v.col].y
+        if v.name == "decoration" then
+            table.insert(self.decoration, Property.new(dt))
+        else
+            table.insert(self.furniture, Property.new(dt))
+        end
+    end
 end
 
 function Detective:initActors()
@@ -214,6 +242,11 @@ function Detective:moveCamera(oCol, oRow)
         end
     end
 
+    -- move decoration
+    for i, v in ipairs(self.decoration) do
+        v:move(ox, oy, 0, 0)
+    end
+
     -- move properties
     for i, v in ipairs(self.furniture) do
         v:move(ox, oy, 0, 0)
@@ -282,15 +315,21 @@ function Detective:draw()
         end
     end
 
+    -- draw decoration
+    for i, dec in ipairs(self.decoration) do
+        dec:draw()
+    end
+    
+    -- draw actor
+    if self.currentActor then
+        self.currentActor:draw()
+    end
+
     -- draw furniture
     for i, fur in ipairs(self.furniture) do
         fur:draw()
     end
 
-    -- draw actor
-    if self.currentActor then
-        self.currentActor:draw()
-    end
 end
 
 

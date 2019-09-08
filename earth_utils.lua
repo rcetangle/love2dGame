@@ -1,3 +1,9 @@
+function table.merge( tDest, tSrc )
+    for k, v in pairs( tSrc ) do
+        tDest[k] = v
+    end
+end
+
 function eh_safeCallFunc(func, ...)
     if func and type(func) == "function" then
         func(...)
