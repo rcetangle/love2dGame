@@ -27,9 +27,9 @@ local propertyMap = {
 }
 local size = 44
 
-function Detective:load()
-    -- global params
-    eh_TileTexture = {
+function Detective:loadTextures()
+     -- global params
+     eh_TileTexture = {
         -- floors
         love.graphics.newImage("res/earth/0.png"),
         love.graphics.newImage("res/earth/1.png"),
@@ -96,10 +96,24 @@ function Detective:load()
     }
 
     eh_ActorTexture = {
-        love.graphics.newImage("res/earth/detective.png"),
-        love.graphics.newImage("res/earth/thife.png"),
+        detective = {
+            love.graphics.newImage("res/earth/detective.png"),
+            love.graphics.newImage("res/earth/detective_l.png"),
+            love.graphics.newImage("res/earth/detective_b.png"),
+            love.graphics.newImage("res/earth/detective_r.png"),
+        },
+        thief = {
+            love.graphics.newImage("res/earth/thife.png"),
+            love.graphics.newImage("res/earth/thief_l.png"),
+            love.graphics.newImage("res/earth/thief_b.png"),
+            love.graphics.newImage("res/earth/thief_r.png"),
+        }
     }
+end
 
+
+function Detective:load()
+    self:loadTextures()
     self:initTilesMap()
     self:initFurniture()
     self:initActors()
@@ -150,7 +164,7 @@ function Detective:initActors()
     -- detective
     local row = 3
     local col = 2
-    self.actors[1] = Actor.new(1, {
+    self.actors[1] = Actor.new("detective", {
         moves = 4, 
         property = 1,
 
@@ -161,14 +175,14 @@ function Detective:initActors()
     })
 
     -- thief
-    row = 6
+    row = 4
     col = 6
-    self.actors[2] = Actor.new(2, {
+    self.actors[2] = Actor.new("thief", {
         moves = 3, 
         property = 1,
 
         row = row,
-        cpl = col,
+        col = col,
         x = self.tiles[row][col].x,
         y = self.tiles[row][col].y
     })
@@ -186,17 +200,55 @@ function Detective:moveActor(oCol, oRow)
         return
     end
 
+    local nextProperty = nil
+    for i, v in ipairs(self.furniture) do
+        if v:containsTile(nextTile.row, nextTile.col) then
+            nextProperty = v
+            break
+        end
+    end
+
+    if nextProperty then
+        -- change facing direction
+        self.currentActor:changeDirection(oRow, oCol)
+        if not self.pressedA or not self.currentActor:hasMoves() then
+            eh_append2Output("cannot walk through the property")
+            return
+        end
+    end
+
+    if self.pressedA and self.currentActor:hasMoves() then
+        -- get the facing property and move it
+        local faceRow, faceCol = self.currentActor:getFaceTileIdx()
+        local facingProperty = nil
+        if faceRow == nextTile.row and faceCol == nextTile.col then
+            facingProperty = nextProperty
+        else
+            for i, v in ipairs(self.furniture) do
+                if v:containsTile(faceRow, faceCol) then
+                    facingProperty = v
+                    break
+                end
+            end
+        end
+        if facingProperty then
+            facingProperty:move(oCol*size, oRow*size, oRow, oCol)
+            -- self.currentActddor:reduceMoves()
+        end
+    end
+
     -- move actor to the next tile
     -- if the actor is not in the 3/4 center of the screen, 
     -- move the camera meanwhile.
-    self.currentActor:move(oCol*size, oRow*size, oRow, oCol)
+    self.currentActor:move(oCol*size, oRow*size, oRow, oCol, not self.pressedA)
     if self.currentActor.x < eh_screen.quanterRect[1]
         or self.currentActor.x > eh_screen.quanterRect[3] 
         or self.currentActor.y < eh_screen.quanterRect[2]
         or self.currentActor.y > eh_screen.quanterRect[4] then
             self:moveCamera(-oCol, -oRow)
     end
-    eh_append2Output(string.format("move %d,%d", self.currentActor.row, self.currentActor.col))
+
+    -- eh_append2Output(string.format("move %d,%d face %d", self.currentActor.row, self.currentActor.col, self.currentActor.face))
 end
 
 -- move the camera
@@ -270,24 +322,25 @@ function Detective:shiftActor()
             break
         end
     end
-    -- 把上一轮的摄像机位置还原
-    -- 如果没有上一轮的摄像机位置，就用角色的当前位置来定
-    if not lastMapLeft then
-        lastMapLeft = self.currentActor.x
-    end
-    if not lastMapTop then
-        lastMapTop = self.currentActor.y
-    end
-    -- 以摄像机位置为坐标原点，计算所有坐标的位置
-    -- tiles
-    for i, v in ipairs(self.tiles) do
-        for j, tile in ipairs(v) do
-            tile.x = tile.x - lastMapLeft
-            tile.y = tile.y - lastMapTop
-        end
-    end
+    -- -- 把上一轮的摄像机位置还原
+    -- -- 如果没有上一轮的摄像机位置，就用角色的当前位置来定
+    -- if not lastMapLeft then
+    --     lastMapLeft = self.currentActor.x
+    -- end
+    -- if not lastMapTop then
+    --     lastMapTop = self.currentActor.y
+    -- end
+    -- -- 以摄像机位置为坐标原点，计算所有坐标的位置
+    -- -- tiles
+    -- for i, v in ipairs(self.tiles) do
+    --     for j, tile in ipairs(v) do
+    --         tile.x = tile.x - lastMapLeft
+    --         tile.y = tile.y - lastMapTop
+    --     end
+    -- end
     -- properties
     -- actors
+    self.currentActor:resetMoves()
 end
 
 
@@ -319,7 +372,7 @@ function Detective:draw()
     for i, dec in ipairs(self.decoration) do
         dec:draw()
     end
-    
+
     -- draw actor
     if self.currentActor then
         self.currentActor:draw()
@@ -336,7 +389,12 @@ end
 
 ------- key events
 function Detective:keypressed(key)
-    eh_append2Output("pressed "..key)
+    if self.shiftClicked then return end
+
+    -- eh_append2Output("pressed "..key)
+    if key == "a" then
+        self.pressedA = true
+    end
 end
 
 function Detective:keyreleased(key)
@@ -361,6 +419,8 @@ function Detective:keyreleased(key)
         self:moveActor(1, 0)
     elseif key == "left" then
         self:moveActor(-1, 0)
+    elseif key == "a" then
+        self.pressedA = false
     end
 end
 

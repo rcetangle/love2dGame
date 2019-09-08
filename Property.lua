@@ -40,10 +40,11 @@ function BaseProperty:rotate(oR)
 end
 
 function BaseProperty:containsTile(row, col)
+    -- eh_append2Output(string.format("%d - %d ht:%d, %d - %d wd:%d", row, self.row, self.height, col, self.col, self.width))
     return row <= self.row 
-        and self.row - row <= self.height 
+        and self.row - row < self.height 
         and col >= self.col
-        and col - self.col <= self.width
+        and col - self.col < self.width
 end
 
 return BaseProperty
