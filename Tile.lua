@@ -26,10 +26,13 @@ function Tile:ctor(state, x, y, row, col)
     end
 end
 
-function Tile:draw()
+function Tile:draw(actor)
     if not self.texture then return end
     love.graphics.draw(self.texture, self.x, self.y)
     love.graphics.print(self.row..","..self.col, self.x, self.y)
+    if self.property then
+        self.property:draw(actor)
+    end
 end
 
 -- can put property on the tile
@@ -62,12 +65,25 @@ function Tile:putProperty(property)
     self.property = property
     self.property.x = self.x
     self.property.y = self.y
+    self.property.row = self.row
+    self.property.col = self.col
+end
+
+function Tile:hasProperty()
+    return self.property
+end
+
+function Tile:getProperty()
+    return self.property
 end
 
 -- move the tile
 function Tile:move(ox, oy)
     self.x = self.x + ox
     self.y = self.y + oy
+    if self.property then
+        self.property:move(ox, oy, 0, 0)
+    end
 end
 
 -- lighten the tile

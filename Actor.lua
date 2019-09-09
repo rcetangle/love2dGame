@@ -1,3 +1,4 @@
+local Property = require(".Property")
 local Actor = class("Actor")
 
 function Actor:ctor(state, params)
@@ -15,6 +16,7 @@ function Actor:ctor(state, params)
     self.initMoves = params.moves
     self.moves = self.initMoves
     self.propertyCnt = params.property
+    self.propertyHurt = params.propertyHurt or 1
 
     self.searchedTiles = {}
 end
@@ -90,6 +92,21 @@ function Actor:hasSearthThisTile(tile)
     return false
 end
 
+function Actor:hideOnTile(tile) 
+    return true
+end
+
+function Actor:hurtByProperty(property)
+    local hurt = property:touchActor(self)
+    for i = 1, hurt do
+        self:reduceMoves()
+    end
+    if hurt > 1 then
+        -- 这里要播放角色受伤的动画
+        eh_append2Output("actor is hurt!!!!!"..hurt)
+    end
+end
+
 -- put property on the tile,
 -- return true if successfully
 function Actor:putPropertyOnTile(tile)
@@ -99,11 +116,21 @@ function Actor:putPropertyOnTile(tile)
         and tile:canPutProperty() then
 
         self.propertyCnt = self.propertyCnt - 1
-        tile:putProperty(tile)
+
+        -- new a property
+        local newProperty = Property.new({
+            byWhom = self,
+            state = "HURT",
+            hurtMoves = self.propertyHurt,
+            texture = self.texture,
+            frames = {self.texture, self.textures[2]}
+        })
+        tile:putProperty(newProperty)
 
         self:reduceMoves()
         return true
     end
+    eh_append2Output("actor cannot put property")
     return false
 end
 

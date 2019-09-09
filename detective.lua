@@ -111,7 +111,6 @@ function Detective:loadTextures()
     }
 end
 
-
 function Detective:load()
     self:loadTextures()
     self:initTilesMap()
@@ -142,6 +141,7 @@ end
 
 function Detective:initFurniture()
     self.furniture = {}
+    self.furnitureMap = {}
     self.decoration = {}
     for i, v in ipairs(propertyMap) do
         local dt = {}
@@ -153,7 +153,17 @@ function Detective:initFurniture()
         if v.name == "decoration" then
             table.insert(self.decoration, Property.new(dt))
         else
-            table.insert(self.furniture, Property.new(dt))
+            local newFur = Property.new(dt)
+            table.insert(self.furniture, newFur)
+
+            for h = newFur.row, newFur.row-newFur.height+1, -1 do
+                if not self.furnitureMap[h] then
+                    self.furnitureMap[h] = {}
+                end
+                for w = newFur.col, newFur.col+newFur.width-1 do
+                    self.furnitureMap[h][w] = newFur
+                end
+            end
         end
     end
 end
@@ -204,13 +214,17 @@ function Detective:isPropertyCanMove2Tile(property, oRow, oCol)
             return false
         end
 
-        local nextProperty = nil
-        for i, v in ipairs(self.furniture) do
-            if v:containsTile(nextTile.row, nextTile.col) then
-                -- eh_append2Output(string.format("has property %d,%d", nextTile.row, nextTile.row))
-                return false
-            end
+        if self.furnitureMap[nextTile.row] and self.furnitureMap[nextTile.row][nextTile.col] ~= nil then
+            eh_append2Output(string.format("has property %d,%d", nextTile.row, nextTile.row))
+            return false
         end
+        -- local nextProperty = nil
+        -- for i, v in ipairs(self.furniture) do
+        --     if v:containsTile(nextTile.row, nextTile.col) then
+        --         -- eh_append2Output(string.format("has property %d,%d", nextTile.row, nextTile.row))
+        --         return false
+        --     end
+        -- end
     end
     return true
 end
@@ -221,54 +235,80 @@ function Detective:moveActor(oCol, oRow)
     local rows = self.tiles[self.currentActor.row+oRow]
     local nextTile = rows and rows[self.currentActor.col+oCol]
     if not nextTile or not nextTile:canWalk() then
-        -- eh_append2Output("tile is not walkable")
+        -- eh_append2Output("next tile is not walkable")
         return
     end
     
-    local nextProperty = nil
-    for i, v in ipairs(self.furniture) do
-        if v:containsTile(nextTile.row, nextTile.col) then
-            nextProperty = v
-            break
-        end
-    end
+    local nextProperty = self.furnitureMap[nextTile.row] and self.furnitureMap[nextTile.row][nextTile.col]
+    -- for i, v in ipairs(self.furniture) do
+    --     if v:containsTile(nextTile.row, nextTile.col) then
+    --         nextProperty = v
+    --         break
+    --     end
+    -- end
 
     if nextProperty then
         -- change facing direction
         self.currentActor:changeDirection(oRow, oCol)
         if not self.pressedA or not self.currentActor:hasMoves() then
-            -- eh_append2Output("cannot walk through the property")
+            eh_append2Output("cannot walk through the property")
             return
         end
     end
 
+    local facingProperty = nil
     if self.pressedA and self.currentActor:hasMoves() then
         -- get the facing property and move it
         local faceRow, faceCol = self.currentActor:getFaceTileIdx()
-        local facingProperty = nil
-        if faceRow == nextTile.row and faceCol == nextTile.col then
-            facingProperty = nextProperty
-        else
-            for i, v in ipairs(self.furniture) do
-                if v:containsTile(faceRow, faceCol) then
-                    facingProperty = v
-                    break
-                end
-            end
-        end
+        facingProperty = self.furnitureMap[faceRow] and self.furnitureMap[faceRow][faceCol]
+        -- if faceRow == nextTile.row and faceCol == nextTile.col then
+        --     facingProperty = nextProperty
+        -- else
+        --     for i, v in ipairs(self.furniture) do
+        --         if v:containsTile(faceRow, faceCol) then
+        --             facingProperty = v
+        --             break
+        --         end
+        --     end
+        -- end
         if facingProperty then
             if not self:isPropertyCanMove2Tile(facingProperty, oRow, oCol) then
                 return
             end
+
+            for h = facingProperty.row, facingProperty.row-facingProperty.height+1, -1 do
+                if self.furnitureMap[h] then 
+                    for w = facingProperty.col, facingProperty.col+facingProperty.width-1 do
+                        self.furnitureMap[h][w] = nil
+                    end
+                end
+            end
             facingProperty:move(oCol*size, oRow*size, oRow, oCol)
-            self.currentActor:reduceMoves()
+            for h = facingProperty.row, facingProperty.row-facingProperty.height+1, -1 do
+                if not self.furnitureMap[h] then 
+                    self.furnitureMap[h] = {}
+                end
+                for w = facingProperty.col, facingProperty.col+facingProperty.width-1 do
+                    self.furnitureMap[h][w] = facingProperty
+                end
+            end
+
+            -- self.currentActor:reduceMoves()
         end
     end
 
+    -- 还需要选择家具 获取row, col为中心的四个格子的家具。旋转他们
+
     -- move actor to the next tile
-    -- if the actor is not in the 3/4 center of the screen, 
-    -- move the camera meanwhile.
     self.currentActor:move(oCol*size, oRow*size, oRow, oCol, not self.pressedA)
+
+    if nextTile:hasProperty() then -- actor hurt by a property
+        eh_append2Output("hasProperty!")
+        self.currentActor:hurtByProperty(nextTile:getProperty())
+    end
+
+    -- if the actor is not in the 1/3 center of the screen, 
+    -- move the camera meanwhile.
     if self.currentActor.x < eh_screen.quanterRect[1]
         or self.currentActor.x > eh_screen.quanterRect[3] 
         or self.currentActor.y < eh_screen.quanterRect[2]
@@ -339,6 +379,11 @@ function Detective:moveCamera(oCol, oRow)
 end
 
 function Detective:shiftActor()
+    local canHide = self.currentActor:hideOnTile(self.tiles[self.currentActor.row][self.currentActor.col])
+    if not canHide then 
+        eh_append2Output("cannot hide on this tile.")
+        return false
+    end
     -- change the current actor to another
     local lastActor = self.currentActor
     for i, v in ipairs(self.actors) do
@@ -353,12 +398,8 @@ function Detective:shiftActor()
     local oCol = lastActor.col - self.currentActor.col
     -- move the camera
     self:moveCamera(oCol, oRow)
+    return true
 end
-
-
-
-
-
 
 function Detective:update()
     if not self:isRunning() then return end
@@ -376,7 +417,7 @@ function Detective:draw()
     -- draw tiles
     for i, v in ipairs(self.tiles) do
         for j, tile in ipairs(v) do
-            tile:draw()
+            tile:draw(self.currentActor)
         end
     end
 
@@ -394,10 +435,7 @@ function Detective:draw()
     for i, fur in ipairs(self.furniture) do
         fur:draw()
     end
-
 end
-
-
 
 ------- key events
 function Detective:keypressed(key)
@@ -412,8 +450,7 @@ end
 function Detective:keyreleased(key)
     if key == "space" then -- shitf 2 another actor
         if not self.shiftClicked then
-            self.shiftClicked = true
-            self:shiftActor()
+            self.shiftClicked = self:shiftActor()
         else
             self.shiftClicked = false
         end
@@ -433,6 +470,8 @@ function Detective:keyreleased(key)
         self:moveActor(-1, 0)
     elseif key == "a" then
         self.pressedA = false
+    elseif key == "y" then
+        self.currentActor:putPropertyOnTile(self.tiles[self.currentActor.row][self.currentActor.col])
     end
 end
 
