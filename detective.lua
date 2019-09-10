@@ -3,29 +3,28 @@ local Actor = require(".Actor")
 local Property = require(".Property")
 local Detective = class("Detective", require(".earth_scene"))
 
--- tiles map
-local map = {
-    {-3,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2},
-    {-3,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    {-3,1,1,1,1,1,1,1,1,1,1},
-    {-3,1,0,0,1,0,0,1,1,1,1},
-    {-3,1,0,0,1,0,0,1,1,1,1},
-    {-3,0,1,0,1,0,0,1,1,1,1},
-    {-3,1,1,1,1,1,1,1,1,1,1},
-    {-3,0,1,1,1,1,1,1,1,1,1},
-    {-5,1,1,1,1,1,1,1,1,1,1},
-    {-4,1,1,1,1,1,1,1,1,1,1},
-}
-
-local propertyMap = {
-    {row=6, col = 3, name="closet"},
-    {row=8, col = 4, name="closet2", frame=2, sy=-1},
-    {row=8, col = 8, name="bed"},
-    {row=1, col= 4, name="decoration"},
-    {row=2, col= 6, name="decoration", frame=4},
-    {row=5, col= 5, name="decoration", frame=6},
-}
+local gameTurn = 1
 local size = 44
+
+local map = {}
+local propertyMap = {}
+
+function Detective:load()
+    -- load map
+    local mapConfig = nil
+    if gameTurn == 1 then
+        mapConfig = require(".SimpleMap")
+    else
+        mapConfig = require(".SimpleMap")
+    end
+    map = mapConfig.tileMap1
+    propertyMap = mapConfig.propertyMap1
+
+    self:loadTextures()
+    self:initTilesMap()
+    self:initFurniture()
+    self:initActors()
+end
 
 function Detective:loadTextures()
      -- global params
@@ -66,6 +65,7 @@ function Detective:loadTextures()
             love.graphics.newImage("res/earth/chair_f.png"),
             love.graphics.newImage("res/earth/chair_l.png"),
             love.graphics.newImage("res/earth/chair_b.png"),
+            love.graphics.newImage("res/earth/chair_r.png"),
             }
         },
         bed = {  
@@ -77,17 +77,24 @@ function Detective:loadTextures()
             }
         },
         closet3 = {
-            width = 2, height = 2, state = "MOVE",
+            width = 2, height = 1, state = "MOVE",
             frames = {
             love.graphics.newImage("res/earth/4Closet_f.png"),
-            love.graphics.newImage("res/earth/4Closet_l.png"),
             love.graphics.newImage("res/earth/4Closet_b.png"),
+            }
+        },
+        closet4 = {
+            width = 1, height = 1, state = "MOVE",
+            frames = {
+                love.graphics.newImage("res/earth/4Closet_l.png"),
             }
         },
         -- decoration
         decoration = {
-            love.graphics.newImage("res/earth/bigPic.png"),
-            love.graphics.newImage("res/earth/smallPic.png"),
+            love.graphics.newImage("res/earth/pic_b1.png"),
+            love.graphics.newImage("res/earth/pic_b2.png"),
+            love.graphics.newImage("res/earth/pic_s1.png"),
+            love.graphics.newImage("res/earth/pic_s2.png"),
             love.graphics.newImage("res/earth/clock.png"),
             love.graphics.newImage("res/earth/door.png"),
             love.graphics.newImage("res/earth/door2.png"),
@@ -98,24 +105,17 @@ function Detective:loadTextures()
     eh_ActorTexture = {
         detective = {
             love.graphics.newImage("res/earth/detective.png"),
-            love.graphics.newImage("res/earth/detective_l.png"),
-            love.graphics.newImage("res/earth/detective_b.png"),
             love.graphics.newImage("res/earth/detective_r.png"),
+            love.graphics.newImage("res/earth/detective_b.png"),
+            love.graphics.newImage("res/earth/detective_l.png"),
         },
         thief = {
             love.graphics.newImage("res/earth/thife.png"),
-            love.graphics.newImage("res/earth/thief_l.png"),
-            love.graphics.newImage("res/earth/thief_b.png"),
             love.graphics.newImage("res/earth/thief_r.png"),
+            love.graphics.newImage("res/earth/thief_b.png"),
+            love.graphics.newImage("res/earth/thief_l.png"),
         }
     }
-end
-
-function Detective:load()
-    self:loadTextures()
-    self:initTilesMap()
-    self:initFurniture()
-    self:initActors()
 end
 
 function Detective:initTilesMap()
@@ -126,11 +126,13 @@ function Detective:initTilesMap()
     local lastX = 0
     for i, v in ipairs(map) do
         self.tiles[i] = {}
-        lastX = 0
+        lastX = -size/2
         for j, w in ipairs(v) do
             self.tiles[i][j] = Tile.new(w+1, lastX, lastY, i, j)
             if j < #v then
-                lastX = lastX + ((w <= -3 and w >= -5) and 21 or size)
+                lastX = lastX + size
+            else
+                lastX = lastX-size/2
             end
         end
         lastY = lastY + size
@@ -251,7 +253,7 @@ function Detective:moveActor(oCol, oRow)
         -- change facing direction
         self.currentActor:changeDirection(oRow, oCol)
         if not self.pressedA or not self.currentActor:hasMoves() then
-            eh_append2Output("cannot walk through the property")
+            -- eh_append2Output("cannot walk through the property")
             return
         end
     end

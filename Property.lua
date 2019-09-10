@@ -23,7 +23,7 @@ function BaseProperty:ctor(parms)
 
     -- adjust the anchor point if needed
     if self.texture:getHeight() > 44 then
-        self.y = self.y-self.texture:getHeight()/2 -- set the anchor point to left,bottom
+        self.y = self.y-self.texture:getHeight()+44 -- set the anchor point to left,bottom
     end
 end
 
@@ -31,7 +31,7 @@ function BaseProperty:draw(actor)
     if not self.texture then return end
     -- an actor can not see the property that is put by other actors 
     if self.byWhom and self.state == PRO_STATE.HURT and self.byWhom ~= actor then return end
-    love.graphics.draw(self.texture, self.x, self.y, 0, self.sx)
+    love.graphics.draw(self.texture, self.x, self.y, 0, self.sx, self.sy)
     love.graphics.print(self.row..","..self.col, self.x, self.y+30)
 end
 
