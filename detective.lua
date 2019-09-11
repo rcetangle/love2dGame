@@ -10,6 +10,7 @@ local map = {}
 local propertyMap = {}
 
 function Detective:load()
+    math.randomseed(os.time())
     -- load map
     local mapConfig = nil
     if gameTurn == 1 then
@@ -19,6 +20,12 @@ function Detective:load()
     end
     map = mapConfig.tileMap1
     propertyMap = mapConfig.propertyMap1
+
+    gameTurn = gameTurn + 1
+
+    self.isGameEnd = false
+    self.canRestart = false
+    self.winner = ""
 
     self:loadTextures()
     self:initTilesMap()
@@ -84,7 +91,7 @@ function Detective:loadTextures()
             }
         },
         closet4 = {
-            width = 1, height = 1, state = "MOVE",
+            width = 1, height = 2, state = "MOVE",
             frames = {
                 love.graphics.newImage("res/earth/4Closet_l.png"),
             }
@@ -104,16 +111,62 @@ function Detective:loadTextures()
 
     eh_ActorTexture = {
         detective = {
-            love.graphics.newImage("res/earth/detective.png"),
-            love.graphics.newImage("res/earth/detective_r.png"),
-            love.graphics.newImage("res/earth/detective_b.png"),
-            love.graphics.newImage("res/earth/detective_l.png"),
+            {
+                love.graphics.newImage("res/earth/detective.png"),
+                love.graphics.newImage("res/earth/detective2.png"),
+                love.graphics.newImage("res/earth/detective3.png"),
+            },
+            {
+                love.graphics.newImage("res/earth/detective_r.png"),
+                love.graphics.newImage("res/earth/detective_r2.png"),
+                love.graphics.newImage("res/earth/detective_r3.png"),
+            },
+            {
+                love.graphics.newImage("res/earth/detective_b.png"),
+                love.graphics.newImage("res/earth/detective_b2.png"),
+                love.graphics.newImage("res/earth/detective_b3.png"),
+
+            },
+            {
+                love.graphics.newImage("res/earth/detective_l.png"),
+                love.graphics.newImage("res/earth/detective_l2.png"),
+                love.graphics.newImage("res/earth/detective_l3.png"),
+            }
         },
         thief = {
-            love.graphics.newImage("res/earth/thife.png"),
-            love.graphics.newImage("res/earth/thief_r.png"),
-            love.graphics.newImage("res/earth/thief_b.png"),
-            love.graphics.newImage("res/earth/thief_l.png"),
+            {
+                love.graphics.newImage("res/earth/thife.png"),
+                love.graphics.newImage("res/earth/thife2.png"),
+                love.graphics.newImage("res/earth/thife3.png"),
+            },
+            {
+                love.graphics.newImage("res/earth/thief_r.png"),
+                love.graphics.newImage("res/earth/thief_r2.png"),
+                love.graphics.newImage("res/earth/thief_r3.png"),
+            },
+            {
+                love.graphics.newImage("res/earth/thief_b.png"),
+                love.graphics.newImage("res/earth/thief_b2.png"),
+                love.graphics.newImage("res/earth/thief_b3.png"),
+            },
+            {
+                love.graphics.newImage("res/earth/thief_l.png"),
+                love.graphics.newImage("res/earth/thief_l2.png"),
+                love.graphics.newImage("res/earth/thief_l3.png"),
+            }
+        }
+    }
+    eh_PropTexture = {
+        detective = {
+            love.graphics.newImage("res/earth/prop_detective.png"),
+            love.graphics.newImage("res/earth/prop_detective.png"),
+        },
+        thief = {
+            love.graphics.newImage("res/earth/prop_thief.png"),
+            love.graphics.newImage("res/earth/prop_thief.png"),
+        },
+        key = {
+            love.graphics.newImage("res/earth/prop_key.png"),
         }
     }
 end
@@ -124,6 +177,7 @@ function Detective:initTilesMap()
     self.tiles = {}
     local lastY = 0
     local lastX = 0
+    local blackCnt = 0
     for i, v in ipairs(map) do
         self.tiles[i] = {}
         lastX = -size/2
@@ -134,11 +188,32 @@ function Detective:initTilesMap()
             else
                 lastX = lastX-size/2
             end
+            if w == 0 then
+                blackCnt = blackCnt + 1
+            end
         end
         lastY = lastY + size
     end
     self.mapWidth = lastX
     self.mapHeight = lastY
+
+    -- random key
+    local rand = math.random(1, blackCnt)
+    for i, v in ipairs(self.tiles) do
+        for j, tile in ipairs(v) do
+            if tile:canHide() then
+                rand = rand-1
+                if rand <= 1 then
+                    local key = Property.new({
+                        texture = eh_PropTexture.key[1],
+                        state = "KEY"    
+                    })
+                    tile:putProperty(key)
+                    return
+                end
+            end
+        end
+    end
 end
 
 function Detective:initFurniture()
@@ -220,13 +295,6 @@ function Detective:isPropertyCanMove2Tile(property, oRow, oCol)
             eh_append2Output(string.format("has property %d,%d", nextTile.row, nextTile.row))
             return false
         end
-        -- local nextProperty = nil
-        -- for i, v in ipairs(self.furniture) do
-        --     if v:containsTile(nextTile.row, nextTile.col) then
-        --         -- eh_append2Output(string.format("has property %d,%d", nextTile.row, nextTile.row))
-        --         return false
-        --     end
-        -- end
     end
     return true
 end
@@ -242,12 +310,6 @@ function Detective:moveActor(oCol, oRow)
     end
     
     local nextProperty = self.furnitureMap[nextTile.row] and self.furnitureMap[nextTile.row][nextTile.col]
-    -- for i, v in ipairs(self.furniture) do
-    --     if v:containsTile(nextTile.row, nextTile.col) then
-    --         nextProperty = v
-    --         break
-    --     end
-    -- end
 
     if nextProperty then
         -- change facing direction
@@ -263,16 +325,7 @@ function Detective:moveActor(oCol, oRow)
         -- get the facing property and move it
         local faceRow, faceCol = self.currentActor:getFaceTileIdx()
         facingProperty = self.furnitureMap[faceRow] and self.furnitureMap[faceRow][faceCol]
-        -- if faceRow == nextTile.row and faceCol == nextTile.col then
-        --     facingProperty = nextProperty
-        -- else
-        --     for i, v in ipairs(self.furniture) do
-        --         if v:containsTile(faceRow, faceCol) then
-        --             facingProperty = v
-        --             break
-        --         end
-        --     end
-        -- end
+
         if facingProperty then
             if not self:isPropertyCanMove2Tile(facingProperty, oRow, oCol) then
                 return
@@ -294,12 +347,25 @@ function Detective:moveActor(oCol, oRow)
                     self.furnitureMap[h][w] = facingProperty
                 end
             end
-
-            -- self.currentActor:reduceMoves()
+            self.currentActor:reduceMoves()
         end
     end
 
     -- 还需要选择家具 获取row, col为中心的四个格子的家具。旋转他们
+    local nowRow = self.currentActor.row
+    local nowCol = self.currentActor.col
+    local furnitureNearby = {
+        self.furnitureMap[nowRow-1] and self.furnitureMap[nowRow-1][nowCol],
+        self.furnitureMap[nowRow+1] and self.furnitureMap[nowRow+1][nowCol],
+        self.furnitureMap[nowRow] and self.furnitureMap[nowRow][nowCol-1],
+        self.furnitureMap[nowRow] and self.furnitureMap[nowRow][nowCol+1]
+    }
+    for k, fur in pairs(furnitureNearby) do
+        if fur ~= facingProperty then
+            fur:rotate()
+        end
+    end
+
 
     -- move actor to the next tile
     self.currentActor:move(oCol*size, oRow*size, oRow, oCol, not self.pressedA)
@@ -381,11 +447,25 @@ function Detective:moveCamera(oCol, oRow)
 end
 
 function Detective:shiftActor()
-    local canHide = self.currentActor:hideOnTile(self.tiles[self.currentActor.row][self.currentActor.col])
+    local tile = self.tiles[self.currentActor.row][self.currentActor.col]
+    local canHide = self.currentActor:hideOnTile(tile)
     if not canHide then 
         eh_append2Output("cannot hide on this tile.")
         return false
     end
+
+    local isTwoMet = self.actors[1]:hasSameHidenTile(self.actors[2].hidenTile)
+    if isTwoMet then
+        self:gameEnd("detective")
+        return
+    end
+
+    if self.currentActor.name == "thief" and tile:hasKey() then
+        tile.property:touchKey(self.currentActor)
+        self:gameEnd("thief")
+        return
+    end
+
     -- change the current actor to another
     local lastActor = self.currentActor
     for i, v in ipairs(self.actors) do
@@ -403,16 +483,39 @@ function Detective:shiftActor()
     return true
 end
 
-function Detective:update()
+function Detective:gameEnd(winner)
+    self.isGameEnd = true
+    self.canRestart = false
+    self.deltaTime = 2
+    self.winner = winner
+end
+
+function Detective:update(dt)
     if not self:isRunning() then return end
+    if self.isGameEnd and not self.canRestart then
+        if self.deltaTime >= 2 then
+            self.currentActor.texture = self.currentActor.textures[1][1]
+        elseif self.deltaTime >= 1 then
+            self.currentActor.x = self.currentActor.x-0.6
+        elseif self.deltaTime <= 0 then
+            self.canRestart = true
+        end
+        self.deltaTime = self.deltaTime - dt
+    end
 end
 
 function Detective:draw()
     if not self:isRunning() then return end
 
+    if self.canRestart then
+        love.graphics.print("WINNER:", eh_screen.cx-10, eh_screen.cy-40)
+        love.graphics.draw(eh_ActorTexture[self.winner][1][1], eh_screen.cx-12, eh_screen.cy-20)
+        love.graphics.print("press 'enter' to restart.")
+        return
+    end
     -- shiftint actor
     if self.shiftClicked then 
-        love.graphics.print("shift to another player...\npress space again when shifting finished.")
+        love.graphics.print("shift to another player...\npress 'space' again when shifting finished.")
         return 
     end
 
@@ -428,8 +531,12 @@ function Detective:draw()
         dec:draw()
     end
 
-    -- draw actor
-    if self.currentActor then
+    -- draw actors
+    if self.isGameEnd then
+        for i, actor in ipairs(self.actors) do
+            actor:draw()
+        end
+    elseif self.currentActor then
         self.currentActor:draw()
     end
 
@@ -450,14 +557,20 @@ function Detective:keypressed(key)
 end
 
 function Detective:keyreleased(key)
+    if key == "escape" then
+        love.window.close()
+    elseif key == "return" and self.canRestart then
+        self:load() -- restart
+    end
+
+    if self.isGameEnd then return end
+
     if key == "space" then -- shitf 2 another actor
         if not self.shiftClicked then
             self.shiftClicked = self:shiftActor()
         else
             self.shiftClicked = false
         end
-    elseif key == "escape" then
-        love.window.close()
     end
 
     -- no key event can be replied until shifting is finished
@@ -472,8 +585,26 @@ function Detective:keyreleased(key)
         self:moveActor(-1, 0)
     elseif key == "a" then
         self.pressedA = false
-    elseif key == "y" then
+    elseif key == "z" then
         self.currentActor:putPropertyOnTile(self.tiles[self.currentActor.row][self.currentActor.col])
+    elseif key == "x" then
+        local tile = self.tiles[self.currentActor.row][self.currentActor.col]
+        local searchSucc = self.currentActor:searchTile(tile)
+        if searchSucc then
+            local another = self.currentActor == self.actors[1] and self.actors[2] or self.actors[1]
+            local isTwoMet = another:hasSameHidenTile(tile)
+            if isTwoMet then
+                self:gameEnd("detective")
+            end
+            
+            -- is key
+            if tile:hasKey() then
+                tile.property:touchKey(self.currentActor)
+                if self.currentActor.name == "thief"  then
+                    self:gameEnd("thief")
+                end
+            end
+        end
     end
 end
 

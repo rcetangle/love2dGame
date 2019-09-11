@@ -29,7 +29,7 @@ end
 function Tile:draw(actor)
     if not self.texture then return end
     love.graphics.draw(self.texture, self.x, self.y)
-    love.graphics.print(self.row..","..self.col, self.x, self.y)
+    -- love.graphics.print(self.row..","..self.col, self.x, self.y)
     if self.property then
         self.property:draw(actor)
     end
@@ -58,6 +58,11 @@ end
 -- is the tile lightenable
 function Tile:canLighten()
     return self.state == TileState.BLACK 
+end
+
+-- is the tile hidable
+function Tile:canHide()
+    return self.state == TileState.BLACK
 end
 
 -- put a property
@@ -92,4 +97,8 @@ function Tile:lighten()
     self.texture = eh_TileTexture[3]
 end
 
+-- is tile has a key
+function Tile:hasKey()
+    return self.property and self.property:isKey()
+end
 return Tile

@@ -2,8 +2,9 @@ local PRO_STATE = {
     NONE = 1, -- not movable and not turnable
     MOVE = 2, -- movable
     TURN = 3, -- turnable
-    MOVE_N_TURN = 4, -- movable and turnable
+    TURN_N_MOVE = 4, -- movable and turnable
     HURT = 5, -- can hurt actor
+    KEY = 6
 }
 local BaseProperty = class("BaseProperty")
 function BaseProperty:ctor(parms)
@@ -20,6 +21,7 @@ function BaseProperty:ctor(parms)
     self.sy = parms.sy
     self.hurtMoves = parms.hurtMoves or 1
     self.byWhom = parms.byWhom
+    self.rotateFrame = 1
 
     -- adjust the anchor point if needed
     if self.texture:getHeight() > 44 then
@@ -31,8 +33,10 @@ function BaseProperty:draw(actor)
     if not self.texture then return end
     -- an actor can not see the property that is put by other actors 
     if self.byWhom and self.state == PRO_STATE.HURT and self.byWhom ~= actor then return end
+    -- key is invisible
+    if self.byWhom ~= actor and self.state == PRO_STATE.KEY then return end
     love.graphics.draw(self.texture, self.x, self.y, 0, self.sx, self.sy)
-    love.graphics.print(self.row..","..self.col, self.x, self.y+30)
+    -- love.graphics.print(self.row..","..self.col, self.x, self.y+30)
 end
 
 function BaseProperty:move(ox, oy, oRow, oCol)
@@ -42,8 +46,11 @@ function BaseProperty:move(ox, oy, oRow, oCol)
     self.col = self.col + oCol
 end
 
-function BaseProperty:rotate(oR)
-    self.rotation = self.rotation + oR * 90
+function BaseProperty:rotate()
+    if self.state ~= PRO_STATE.TURN and self.state ~= PRO_STATE.TURN_N_MOVE then return end
+    if not self.frames then return end
+    self.rotateFrame = math.max(1, (self.rotateFrame+1)%(#self.frames+1))
+    self.texture = self.frames[self.rotateFrame]
 end
 
 function BaseProperty:containsTile(row, col)
@@ -78,6 +85,20 @@ function BaseProperty:touchActor(actor)
         return self.hurtMoves
     end
     return 0
+end
+
+function BaseProperty:touchKey(actor)
+    if self:isKey() then
+        self.byWhom = actor
+    end
+end
+
+function BaseProperty:isKey()
+    return self.state == PRO_STATE.KEY
+end
+
+function BaseProperty:setStateNone()
+    self.state = PRO_STATE.NONE
 end
 
 return BaseProperty

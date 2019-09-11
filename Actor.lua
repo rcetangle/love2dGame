@@ -4,12 +4,14 @@ local Actor = class("Actor")
 function Actor:ctor(state, params)
     self.textures = eh_ActorTexture[state]
     self.isDetective = state == "detective"
+    self.name = state
     self.row = params.row or 0
     self.col = params.col or 0
     self.x = params.x or 0
     self.y = params.y or 0
     self.face = 1
-    self.texture = self.textures[self.face]
+    self.stepCnt = 1
+    self.texture = self.textures[self.face][self.stepCnt]
     
     -- other config
     self.frames = params.frames
@@ -24,7 +26,7 @@ end
 function Actor:draw()
     love.graphics.draw(self.texture, self.x, self.y)
     love.graphics.print({
-        {0,0,0,255},
+        {255,255,255,255},
         string.format("moves:%d, prop:%d", self.moves, self.propertyCnt)}, 
         0, eh_screen.height-20)
 end
@@ -35,9 +37,17 @@ function Actor:move(ox, oy, oRow, oCol, needChangeDirection)
     self.col = self.col + oCol
     self.x = self.x + ox
     self.y = self.y + oy
+
+    self.stepCnt = math.max(1, (self.stepCnt+1)%4)
     if needChangeDirection then
        self:changeDirection(oRow, oCol)
+    else
+        self:updateTexture()
     end
+end
+
+function Actor:updateTexture()
+    self.texture = self.textures[self.face][self.stepCnt]
 end
 
 function Actor:changeDirection(oRow, oCol)
@@ -46,7 +56,7 @@ function Actor:changeDirection(oRow, oCol)
     elseif oCol == 0 then
         self.face = oRow > 0 and 1 or 3 -- face 2 front or back
     end
-    self.texture = self.textures[self.face]
+    self:updateTexture()
 end
 
 function Actor:getFaceTileIdx()
@@ -65,19 +75,18 @@ end
 -- for detective, lighten the tile
 -- return true when the tile is searchable/lightenable
 function Actor:searchTile(tile)
-    if not self:hasMoves() then return false end
+    if not self:hasMoves() then 
+        eh_append2Output("cannot search the tile, no moves!")
+        return false 
+    end
     if self.isDetective and tile:canLighten() then
         self:reduceMoves()
         tile:lighten()
         table.insert(self.searchedTiles, tile)
-
-        -- todo：如果tile上面有小偷，那么这个时候要赢了
         return true
     elseif not self.isDetective and tile:canSearch() then
         self:reduceMoves()
         table.insert(self.searchedTiles, tile)
-
-        -- todo：如果tile上面有钥匙，那么这个时候要赢了
         return true
     end
     return false
@@ -92,8 +101,26 @@ function Actor:hasSearthThisTile(tile)
     return false
 end
 
-function Actor:hideOnTile(tile) 
-    return true
+function Actor:hideOnTile(tile)
+    local canHide = false
+    if self.isDetective and not tile:hasKey() then -- detective cannot hide on key tile
+        canHide = true
+    elseif not self.isDetective and tile:canHide() then -- thief can hide on black tile
+        canHide = true
+    end
+    if canHide then
+        self.hidenTile = tile
+
+        -- reset actor direction
+        self.face = 1
+        self.stepCnt = 1
+        self:updateTexture()
+    end
+    return canHide
+end
+
+function Actor:hasSameHidenTile(tile)
+    return self.hidenTile ~= nil and self.hidenTile == tile
 end
 
 function Actor:hurtByProperty(property)
@@ -103,7 +130,7 @@ function Actor:hurtByProperty(property)
     end
     if hurt > 1 then
         -- 这里要播放角色受伤的动画
-        eh_append2Output("actor is hurt!!!!!"..hurt)
+        eh_append2Output("actor is hurt!!!!! "..hurt)
     end
 end
 
@@ -122,11 +149,10 @@ function Actor:putPropertyOnTile(tile)
             byWhom = self,
             state = "HURT",
             hurtMoves = self.propertyHurt,
-            texture = self.texture,
-            frames = {self.texture, self.textures[2]}
+            texture = eh_PropTexture[self.name][1],
+            frames = eh_PropTexture[self.name]
         })
         tile:putProperty(newProperty)
-
         self:reduceMoves()
         return true
     end
