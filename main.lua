@@ -8,8 +8,6 @@ eh_screen.width = 320
 eh_screen.height = 240
 eh_screen.cx = eh_screen.width/2
 eh_screen.cy = eh_screen.height/2
-eh_screen.quanterRect = {eh_screen.width/3, eh_screen.height/3, 
-    eh_screen.width-eh_screen.width/3, eh_screen.height-eh_screen.height/3}
 eh_screen.left = 0
 eh_screen.top = 0
 eh_screen.right = eh_screen.width
@@ -21,15 +19,17 @@ eh_outputTxt = ""
 local eh_currentScene = nil
 local eh_sceneList = {
     -- ".Scenario", 
-    -- ".ChooseGame", 
-    ".detective",
+    ".earth_choose_game", 
+    ".earth_main",
+    ".fire_main",
     -- ".Scenario"
 }
-local eh_index = 0
-function earth_go2NextScene()
+local eh_index = 1
+function earth_go2NextScene(index)
     currentScene = nil
-    eh_index = eh_index + 1
-    
+    index = index or 0
+    eh_index = index+1
+    eh_append2Output(string.format("go 2 scene No.%d", eh_index))
     assert(eh_index <= #eh_sceneList, "no more scene")
     currentScene = require(eh_sceneList[eh_index]).new({
         step = eh_index,

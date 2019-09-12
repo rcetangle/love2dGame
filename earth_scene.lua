@@ -30,4 +30,10 @@ end
 function Scene:update(dt)
 end
 
+function Scene:keypressed(key)
+end
+
+function Scene:keyreleased(key)
+end
+
 return Scene
