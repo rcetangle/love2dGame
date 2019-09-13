@@ -1,9 +1,9 @@
-local Tile = require(".earth_tile")
-local Actor = require(".earth_actor")
+local Tile = require(".earth_tile_new")
+local Actor = require(".earth_actor_new")
 local Property = require(".earth_property")
-local mapConfig = require(".earth_level_config")
+local mapConfig = require(".earth_level_config_new")
 
-local Detective = class("Detective", require(".earth_scene"))
+local Detective = class("DetectiveNew", require(".earth_scene"))
 
 local size = 44
 local map = {}
@@ -58,7 +58,6 @@ function Detective:initTilesMap()
     self.tiles = {}
     local lastY = 0
     local lastX = 0
-    local blackCnt = 0
     for i, v in ipairs(map) do
         self.tiles[i] = {}
         lastX = -size/2
@@ -69,38 +68,18 @@ function Detective:initTilesMap()
             else
                 lastX = lastX+size/2
             end
-            if w == 0 then
-                blackCnt = blackCnt + 1
-            end
         end
         lastY = lastY + size
     end
     self.mapWidth = lastX
     self.mapHeight = lastY
-
-    -- random key
-    local rand = math.random(1, blackCnt)
-    for i, v in ipairs(self.tiles) do
-        for j, tile in ipairs(v) do
-            if tile:canHide() then
-                rand = rand-1
-                if rand <= 1 then
-                    local key = Property.new({
-                        texture = eh_PropTexture.key[1],
-                        state = "KEY"    
-                    })
-                    tile:putProperty(key)
-                    return
-                end
-            end
-        end
-    end
 end
 
 function Detective:initFurniture()
     self.furniture = {}
     self.furnitureMap = {}
     self.decoration = {}
+
     for i, v in ipairs(propertyMap) do
         local dt = {}
         table.merge(dt, eh_FurnitureCfg[v.name])
@@ -124,6 +103,15 @@ function Detective:initFurniture()
             end
         end
     end
+
+    -- random key
+    local rand = math.random(1, #self.furniture)
+    local fur = self.furniture[rand]
+    local key = Property.new({
+        texture = eh_PropTexture.key[1],
+        state = "NONE"
+    })
+    self.tiles[fur.row][fur.col]:putProperty(key)
 end
 
 function Detective:initActors()
@@ -214,7 +202,7 @@ function Detective:moveActor(oCol, oRow)
                     self.furnitureMap[h][w] = facingProperty
                 end
             end
-            self.currentActor:reduceMoves()
+            -- self.currentActor:reduceMoves()
         end
     end
 
@@ -236,11 +224,6 @@ function Detective:moveActor(oCol, oRow)
 
     -- move actor to the next tile
     self.currentActor:move(oCol*size, oRow*size, oRow, oCol, not self.pressedA)
-
-    if nextTile:hasProperty() then -- actor hurt by a property
-        eh_append2Output("hasProperty!")
-        self.currentActor:hurtByProperty(nextTile:getProperty())
-    end
 
     -- move the camera meanwhile.
     local edgeDis = size*2

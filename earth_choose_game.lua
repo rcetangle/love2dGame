@@ -4,6 +4,7 @@ function ChooseGame:load()
     self.list = {
         love.graphics.newImage("assets/detective.png"),
         love.graphics.newImage("assets/fight.png"),
+        love.graphics.newImage("assets/detective.png"),
     }
     self.index = 0
 end

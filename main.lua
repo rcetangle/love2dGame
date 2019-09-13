@@ -22,6 +22,7 @@ local eh_sceneList = {
     ".earth_choose_game", 
     ".earth_main",
     ".fire_main",
+    ".earth_main_new",
     -- ".Scenario"
 }
 local eh_index = 1
