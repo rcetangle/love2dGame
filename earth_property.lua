@@ -27,6 +27,9 @@ function Property:ctor(parms)
     if self.texture:getHeight() > 44 then
         self.y = self.y-self.texture:getHeight()+44 -- set the anchor point to left,bottom
     end
+    if self.state ~= PRO_STATE.NONE then
+        self.y = self.y - 10
+    end
 end
 
 function Property:draw(actor)
@@ -36,7 +39,7 @@ function Property:draw(actor)
     -- key is invisible
     if self.byWhom ~= actor and self.state == PRO_STATE.KEY then return end
     love.graphics.draw(self.texture, self.x, self.y, 0, self.sx, self.sy)
-    -- love.graphics.print(self.row..","..self.col, self.x, self.y+30)
+    -- love.graphics.print(self.row..","..self.col, self.x, self.y)
 end
 
 function Property:move(ox, oy, oRow, oCol)

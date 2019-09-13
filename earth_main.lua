@@ -132,13 +132,13 @@ function Detective:initActors()
     -- detective
     local dtvCfg = mapConfig["detective"..self.gameTurn]
     dtvCfg.x = self.tiles[dtvCfg.row][dtvCfg.col].x
-    dtvCfg.y = self.tiles[dtvCfg.row][dtvCfg.col].y
+    dtvCfg.y = self.tiles[dtvCfg.row][dtvCfg.col].y - size/3
     self.actors[1] = Actor.new("detective", dtvCfg)
 
     -- thief
     local tfCfg = mapConfig["thief"..self.gameTurn]
     tfCfg.x = self.tiles[tfCfg.row][tfCfg.col].x
-    tfCfg.y = self.tiles[tfCfg.row][tfCfg.col].y
+    tfCfg.y = self.tiles[tfCfg.row][tfCfg.col].y - size/3
     self.actors[2] = Actor.new("thief", tfCfg)
 
     self.currentActor = self.actors[1]
@@ -214,24 +214,24 @@ function Detective:moveActor(oCol, oRow)
                     self.furnitureMap[h][w] = facingProperty
                 end
             end
-            self.currentActor:reduceMoves()
+            -- self.currentActor:reduceMoves()
         end
     end
 
-    -- 还需要选择家具 获取row, col为中心的四个格子的家具。旋转他们
-    local nowRow = self.currentActor.row
-    local nowCol = self.currentActor.col
-    local furnitureNearby = {
-        self.furnitureMap[nowRow-1] and self.furnitureMap[nowRow-1][nowCol],
-        self.furnitureMap[nowRow+1] and self.furnitureMap[nowRow+1][nowCol],
-        self.furnitureMap[nowRow] and self.furnitureMap[nowRow][nowCol-1],
-        self.furnitureMap[nowRow] and self.furnitureMap[nowRow][nowCol+1]
-    }
-    for k, fur in pairs(furnitureNearby) do
-        if fur ~= facingProperty then
-            fur:rotate()
-        end
-    end
+    -- -- 还需要选择家具 获取row, col为中心的四个格子的家具。旋转他们
+    -- local nowRow = self.currentActor.row
+    -- local nowCol = self.currentActor.col
+    -- local furnitureNearby = {
+    --     self.furnitureMap[nowRow-1] and self.furnitureMap[nowRow-1][nowCol],
+    --     self.furnitureMap[nowRow+1] and self.furnitureMap[nowRow+1][nowCol],
+    --     self.furnitureMap[nowRow] and self.furnitureMap[nowRow][nowCol-1],
+    --     self.furnitureMap[nowRow] and self.furnitureMap[nowRow][nowCol+1]
+    -- }
+    -- for k, fur in pairs(furnitureNearby) do
+    --     if fur ~= facingProperty then
+    --         fur:rotate()
+    --     end
+    -- end
 
 
     -- move actor to the next tile
@@ -409,18 +409,32 @@ function Detective:draw()
         dec:draw()
     end
 
-    -- draw actors
+    -- draw actors and furniture
+    -- row determins the priority of drawing
+    -- lower row, higher priority.
+    local tmps = {}
+    -- actors
     if self.isGameEnd then
         for i, actor in ipairs(self.actors) do
-            actor:draw()
+            table.insert(tmps, actor)
         end
     elseif self.currentActor then
-        self.currentActor:draw()
+        table.insert(tmps, self.currentActor)
     end
 
-    -- draw furniture
+    -- furniture
     for i, fur in ipairs(self.furniture) do
-        fur:draw()
+        table.insert(tmps, fur)
+    end
+
+    -- sort tmps by row
+    table.sort(tmps, function(a, b)
+        return a.row < b.row
+    end)
+
+    -- draw them
+    for i, v in ipairs(tmps) do
+        v:draw()
     end
 
     -- draw uis
@@ -443,7 +457,6 @@ end
 
 function Detective:keyreleased(key)
     if key == "escape" then
-        -- love.window.close()
         self:stopScene()
     elseif (key == "return" or key == "enter") and self.canRestart then
         self:resetGame() -- restart

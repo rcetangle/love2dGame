@@ -17,11 +17,14 @@ function ChooseGame:draw()
 end
 
 function ChooseGame:keyreleased(key)
-    if key == "down" then
+    eh_append2Output(key)
+    if key == "escape" then
+        love.window.close()
+    elseif key == "down" then
         self.index = (self.index+1)%#self.list
     elseif key == "up" then
         self.index = (self.index-1)%#self.list
-    elseif key == "return" then
+    elseif key == "return" or key == "enter" then
         self:stopScene()
     end
 end
