@@ -72,10 +72,10 @@ function fight_draw()
   --if game_is_over then
   --  love.graphics.print("game_is_over")
   --end
-  love.graphics.print(round_counter)
-  love.graphics.print(game_state, 0, 20)
-  --love.graphics.draw(background)
-  --love.graphics.draw(wall2)
+  --love.graphics.print(round_counter)
+  --love.graphics.print(game_state, 0, 20)
+  love.graphics.draw(background)
+  love.graphics.draw(wall2)
   love.graphics.draw(hp_frame, 33,55)
   love.graphics.draw(circle, 140,45)
   love.graphics.draw(hp_a,  36, 57, 0, hp_table[current_hp_a], 1)
@@ -177,6 +177,12 @@ function player_a_hp_update()
     end
 end
 
+function update_round_counter()
+  if game_state == "Player" then
+    round_counter = round_counter + 1
+  end
+end
+
 function player_a_attack(attack_dir) 
   if (current_hp_b > 1) then
     player_a_attack_timer:add(0.2, function() 
@@ -191,7 +197,7 @@ function player_a_attack(attack_dir)
   end
   player_all_ready_timer:add(0.5, function()
     if (current_hp_b ~= 1) then
-      round_counter = round_counter + 1
+      update_round_counter()
       current_a = state_ready
       current_b = state_ready
     else
@@ -241,7 +247,7 @@ function player_b_round()
         current_a = state_ready
         current_b = state_ready
         player_b_is_attacking = false
-        round_counter = round_counter + 1
+        update_round_counter()
       else
         game_is_over = true
       end
@@ -256,6 +262,7 @@ function fight_update(dt)
   if not game_is_over then
     if current_hp_a == 1 or current_hp_b == 1 then
         game_is_over = true
+        fight_game_end()
     end
     player_a_attack_timer:update(dt)
     player_b_attack_timer:update(dt)
@@ -285,29 +292,3 @@ function fight_update(dt)
     end
   end
 end
-
-
-
-
-
-local FireScene = class("FireScene", require(".earth_scene"))
-function FireScene:load()
-  fight_load()
-end
-
-function FireScene:draw()
-  fight_draw()
-end
-
-function FireScene:update(dt)
-  fight_update(dt)
-end
-
-function FireScene:keypressed(key)
-  if key == "escape" then
-    self:stopScene()
-    return
-  end
-  fight_keypressed(key)
-end
-return FireScene

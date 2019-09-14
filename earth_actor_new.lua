@@ -138,6 +138,7 @@ function Actor:hurtByProperty(property)
     if hurt > 1 then
         -- 这里要播放角色受伤的动画
         eh_append2Output("actor is hurt!!!!! "..hurt)
+        self.texture = self.textures[self.face][4]
     end
 end
 
