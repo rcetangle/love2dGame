@@ -21,6 +21,7 @@ function Tile:ctor(state, x, y, row, col)
     elseif state == TileState.BLACK then
         self.state = TileState.BLACK
         self.texture = eh_TileTexture[1]
+        self.upperTexture = eh_TileTexture[2]
     else
         self.state = TileState.LIGHT
         self.texture = eh_TileTexture[1]
@@ -34,6 +35,9 @@ function Tile:draw(actor)
         love.graphics.draw(self.upperTexture, self.x, self.y)
         return
     end
+    if self.state == TileState.BLACK and self.upperTexture then
+        love.graphics.draw(self.upperTexture, self.x, self.y)
+    end
     -- love.graphics.print(self.row..","..self.col, self.x, self.y)
     if self.property then
         self.property:draw(actor)
@@ -42,7 +46,7 @@ end
 
 -- can put property on the tile
 function Tile:canPutProperty()
-    return self.state == TileState.LIGHT
+    return self.state == TileState.LIGHT or self.state == TileState.BLACK
 end
 
 -- can put furniture on the tile
@@ -57,7 +61,7 @@ end
 
 -- is the tile searchable
 function Tile:canSearch()
-    return self.state == TileState.HIDDEN
+    return self.state == TileState.HIDDEN or self.state == TileState.BLACK
 end
 
 -- is the tile lightenable
@@ -66,8 +70,10 @@ function Tile:canLighten()
 end
 
 -- is the tile hidable
-function Tile:canHide()
-    return self.state == TileState.LIGHT
+function Tile:canHide(actor)
+    return self.state == TileState.LIGHT 
+        or self.state == TileState.BLACK
+        or (self.state == TileState.HIDDEN and self.byWhom == actor)
 end
 
 function Tile:hide(actor)
@@ -89,7 +95,7 @@ function Tile:putProperty(property)
     self.property.row = self.row
     self.property.col = self.col
 
-    self.state = TileState.HIDDEN
+    self.state = property:isKey() and TileState.LIGHT or TileState.HIDDEN
     self.byWhom = property.byWhom
     self.upperTexture = eh_TileTexture[2]
 end
@@ -121,4 +127,12 @@ end
 function Tile:hasKey()
     return self.property and self.property:isKey()
 end
+
+function Tile:showKey(actor)
+    self.state = TileState.HIDDEN
+    -- self.byWhom = actor
+    self.upperTexture = eh_TileTexture[2]
+    self.property:touchKey(actor)
+end
+
 return Tile

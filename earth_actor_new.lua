@@ -18,15 +18,21 @@ function Actor:ctor(state, params)
     -- other config
     self.frames = params.frames
     self.initMoves = params.moves
-    self.moves = self.initMoves
+    self.moves = self.initMoves[1]
     self.propertyCnt = params.property
-    self.propertyHurt = params.propertyHurt or 1
+    self.propertyHurt = params.propertyHurt or {0,0}
+    self.chosenProp = 1
+    self.turns = 1
+    self.nextReduce = 0
 
     self.searchedTiles = {}
 end
 
 function Actor:draw()
     love.graphics.draw(self.texture, self.x, self.y)
+    if self.tmpPropTexture then
+        love.graphics.draw(self.tmpPropTexture, self.x, self.y)
+    end
 end
 
 -- move the actor
@@ -106,7 +112,7 @@ function Actor:hasSearthThisTile(tile)
 end
 
 function Actor:hideOnTile(tile)
-    local canHide = tile:canHide()
+    local canHide = tile:canHide(self)
     if canHide then
         if self.hidenTile then
             self.hidenTile:clearHide()
@@ -128,9 +134,7 @@ end
 
 function Actor:hurtByProperty(property)
     local hurt = property:touchActor(self)
-    for i = 1, hurt do
-        self:reduceMoves()
-    end
+    self:reduceNextRoundMoves(hurt)
     if hurt > 1 then
         -- 这里要播放角色受伤的动画
         eh_append2Output("actor is hurt!!!!! "..hurt)
@@ -140,19 +144,21 @@ end
 -- put property on the tile,
 -- return true if successfully
 function Actor:putPropertyOnTile(tile)
+    local idx = self.chosenProp
+    self.tmpPropTexture = nil
     if self:hasMoves()
-        and self.propertyCnt > 0 
+        and self.propertyCnt[idx] > 0 
         and tile:canPutProperty() then
 
-        self.propertyCnt = self.propertyCnt - 1
+        self.propertyCnt[idx] = self.propertyCnt[idx] - 1
 
         -- new a property
         local newProperty = Property.new({
             byWhom = self,
             state = "HURT",
-            hurtMoves = self.propertyHurt,
-            texture = eh_PropTexture[self.name][1],
-            frames = eh_PropTexture[self.name]
+            hurtMoves = self.propertyHurt[idx],
+            texture = idx == 1 and eh_PropTexture[self.name][1] or eh_PropTexture.smoke[1],
+            frames = idx == 1 and eh_PropTexture[self.name] or eh_PropTexture.smoke
         })
         tile:putProperty(newProperty)
         self:reduceMoves()
@@ -162,6 +168,12 @@ function Actor:putPropertyOnTile(tile)
     return false
 end
 
+function Actor:chooseProp(offset)
+    self.chosenProp = math.max(1, self.chosenProp + offset)
+    self.chosenProp = math.min(self.chosenProp, #self.propertyCnt)
+    self.tmpPropTexture = self.chosenProp == 1 and eh_PropTexture[self.name][1] or eh_PropTexture.smoke[1]
+end
+
 -- reduce moves
 function Actor:reduceMoves()
     self.moves = self.moves - 1
@@ -169,9 +181,14 @@ end
 
 -- reset moves
 function Actor:resetMoves()
-    self.moves = self.initMoves
+    self.moves = math.max(0, self.initMoves[math.min(#self.initMoves, self.turns)] - self.nextReduce)
+    self.turns = self.turns + 1
+    self.nextReduce = 0
 end
 
+function Actor:reduceNextRoundMoves(m)
+    self.nextReduce = self.nextReduce + m
+end
 -- has moves?
 function Actor:hasMoves()
     return self.moves > 0

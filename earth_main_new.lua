@@ -47,7 +47,8 @@ function Detective:initTopUI()
     self.m_uis = {
         {eh_UITexture.top, 0, 0, 1}, -- top bg
         {eh_UITexture[self.currentActor.name], 0, 0, 1}, -- head
-        {eh_PropTexture[self.currentActor.name][1], 224, 0, 0.4}, -- prop
+        {eh_PropTexture[self.currentActor.name][1], 224, -2, 0.4}, -- prop
+        {eh_PropTexture.smoke[1], 270, -2, 0.4}, -- prop
         {eh_UITexture["num_"..self.winCnts[2]], 145, 4, 1}, -- thief win cnt
         {eh_UITexture["num_"..self.winCnts[1]], 177, 4, 1}, -- detective win cnt
     }
@@ -109,7 +110,7 @@ function Detective:initFurniture()
     local fur = self.furniture[rand]
     local key = Property.new({
         texture = eh_PropTexture.key[1],
-        state = "NONE"
+        state = "KEY"
     })
     self.tiles[fur.row][fur.col]:putProperty(key)
 end
@@ -130,6 +131,7 @@ function Detective:initActors()
     self.actors[2] = Actor.new("thief", tfCfg)
 
     self.currentActor = self.actors[1]
+    self.currentActor:resetMoves()
 end
 
 -- check the property can move 2 tile
@@ -185,11 +187,14 @@ function Detective:moveActor(oCol, oRow)
             if not self:isPropertyCanMove2Tile(facingProperty, oRow, oCol) then
                 return
             end
-
+            local keyTile = nil
             for h = facingProperty.row, facingProperty.row-facingProperty.height+1, -1 do
                 if self.furnitureMap[h] then 
                     for w = facingProperty.col, facingProperty.col+facingProperty.width-1 do
                         self.furnitureMap[h][w] = nil
+                        if self.tiles[h][w]:hasKey() then
+                            keyTile = self.tiles[h][w]
+                        end
                     end
                 end
             end
@@ -202,7 +207,13 @@ function Detective:moveActor(oCol, oRow)
                     self.furnitureMap[h][w] = facingProperty
                 end
             end
-            -- self.currentActor:reduceMoves()
+            self.currentActor:reduceMoves()
+
+            -- if key is under this furniture, show it
+            if keyTile then
+                eh_append2Output("has Key!!!")
+                keyTile:showKey(self.currentActor)
+            end
         end
     end
 
@@ -425,7 +436,8 @@ function Detective:draw()
         love.graphics.draw(v[1], v[2], v[3], 0, v[4], v[4])
     end
     love.graphics.print(self.currentActor.moves, 72, 0)
-    love.graphics.print(self.currentActor.propertyCnt, 250, 0)
+    love.graphics.print(self.currentActor.propertyCnt[1], 250, 0)
+    love.graphics.print(self.currentActor.propertyCnt[2], 292, 0)
 end
 
 ------- key events
@@ -435,6 +447,9 @@ function Detective:keypressed(key)
     -- eh_append2Output("pressed "..key)
     if key == "a" then
         self.pressedA = true
+    elseif key == "z" then
+        self.pressedY = true
+        self.currentActor:chooseProp(0)
     end
 end
 
@@ -458,16 +473,29 @@ function Detective:keyreleased(key)
     -- no key event can be replied until shifting is finished
     if self.shiftClicked then return end
     if key == "up" then
-        self:moveActor(0, -1)
+        if not self.pressedY then
+            self:moveActor(0, -1)
+        end
     elseif key == "down" then
-        self:moveActor(0, 1)
+        if not self.pressedY then
+            self:moveActor(0, 1)
+        end
     elseif key == "right" then
-        self:moveActor(1, 0)
+        if self.pressedY then
+            self.currentActor:chooseProp(1)
+        else
+            self:moveActor(1, 0)
+        end
     elseif key == "left" then
-        self:moveActor(-1, 0)
+        if self.pressedY then
+            self.currentActor:chooseProp(-1)
+        else
+            self:moveActor(-1, 0)
+        end
     elseif key == "a" then
         self.pressedA = false
     elseif key == "z" then
+        self.pressedY = false
         self.currentActor:putPropertyOnTile(self.tiles[self.currentActor.row][self.currentActor.col])
     elseif key == "x" then
         local tile = self.tiles[self.currentActor.row][self.currentActor.col]

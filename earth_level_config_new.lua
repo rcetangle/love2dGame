@@ -51,14 +51,18 @@ eh_ActorTexture = {
 eh_PropTexture = {
     detective = {
         love.graphics.newImage("assets/earth/prop_detective.png"),
-        love.graphics.newImage("assets/earth/prop_detective.png"),
+        love.graphics.newImage("assets/earth/prop_detective2.png"),
     },
     thief = {
         love.graphics.newImage("assets/earth/prop_thief.png"),
-        love.graphics.newImage("assets/earth/prop_thief.png"),
+        love.graphics.newImage("assets/earth/prop_thief2.png"),
     },
     key = {
         love.graphics.newImage("assets/earth/prop_key.png"),
+    },
+    smoke = {
+        love.graphics.newImage("assets/earth/prop_smoke.png"),
+        love.graphics.newImage("assets/earth/prop_smoke2.png"),
     }
 }
 eh_UITexture = {
@@ -83,9 +87,9 @@ level_config.tileMap1 = {
 	{-3,-2,-2,-3,-2,-2,-2,-2,-2,-2,-3,-2,-2,-2,-2,-2,-3},
     {-3,-1,-1,-3,-1,-1,-1,-1,-1,-1,-4,-1,-1,-1,-1,-1,-3},
     {-3, 1, 1,-3, 1, 1, 1, 1, 1, 1,-5, 1, 1, 1, 1, 1,-3},
-    {-3, 1, 1,-4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
-    {-3, 1, 1,-5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
-    {-3, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3, 1, 1, 1, 1, 1,-3},
+    {-3, 0, 1,-4, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
+    {-3, 0, 1,-5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
+    {-3, 0, 1, 1, 1, 1, 1, 1, 1, 1,-3, 1, 1, 1, 1, 1,-3},
     {-3, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3, 1, 1, 1, 1, 1,-3},
 }
 
@@ -178,8 +182,8 @@ level_config.propertyMap1 = {
 	{row=2, col=13, name="decoration", frame=2},
 
 	-- floor's
-	{row=7, col=6, name="decoration", frame=8},
-	{row=7, col=13, name="decoration", frame=8},
+	-- {row=7, col=6, name="decoration", frame=8},
+	-- {row=7, col=13, name="decoration", frame=8},
 
 	-- furniture
 	{row=3, col=3, name="closet2", frame=2},
@@ -203,18 +207,18 @@ level_config.propertyMap1 = {
 }
 
 level_config.detective1 = {
-	moves = 3, 
-    property = 2,
-    propertyHurt = 1,
+	moves = {1, 3, 5}, 
+    property = {2, 15},
+    propertyHurt = {1, 0},
  
     row = 3,
     col = 2,	
 }
 
 level_config.thief1 = {
-	moves = 2, 
-    property = 2,
-    propertyHurt = 2,
+	moves = {1, 3, 5}, 
+    property = {2, 15},
+    propertyHurt = {2, 0},
  
     row = 6,
     col = 13,
