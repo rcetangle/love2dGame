@@ -20,9 +20,9 @@ local eh_currentScene = nil
 local eh_sceneList = {
     -- ".Scenario", 
     ".earth_choose_game", 
-    ".earth_main",
-    ".fire_main",
+    -- ".earth_main",
     ".earth_main_new",
+    ".fire_main",
     -- ".Scenario"
 }
 local eh_index = 1
@@ -53,7 +53,7 @@ function love.draw()
     end
     
     -- print output
-    love.graphics.print({{0,0,255,255},eh_outputTxt}, 0, 0)
+    -- love.graphics.print({{0,0,255,255},eh_outputTxt}, 0, 0)
 end
 
 -- called continuosly

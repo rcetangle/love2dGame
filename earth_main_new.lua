@@ -2,6 +2,7 @@ local Tile = require(".earth_tile_new")
 local Actor = require(".earth_actor_new")
 local Property = require(".earth_property")
 local mapConfig = require(".earth_level_config_new")
+local Keys = require("fire_keys")
 
 local Detective = class("DetectiveNew", require(".earth_scene"))
 
@@ -14,20 +15,22 @@ function Detective:load()
     self.winCnts = {0, 0}
     self.gameTurn = 1
     self:resetGame()
+    self.initStart = true
+    love.audio.play(eh_Sound[#eh_Sound])
 end
 
 function Detective:resetGame()
     local gameTurn = self.gameTurn
-    if gameTurn > 2 then
+    if gameTurn > 3 then
         self:stopScene()
         return
     end
 
     -- load map
-    map = mapConfig["tileMap"..gameTurn]
+    map = table.clone(mapConfig["tileMap"..gameTurn])
     eh_TileTexture = mapConfig["tileTexture"..gameTurn]
 
-    propertyMap = mapConfig["propertyMap"..gameTurn]
+    propertyMap = table.clone(mapConfig["propertyMap"..gameTurn])
     eh_FurnitureCfg = mapConfig["furnitureCfg"..gameTurn]
 
 
@@ -82,8 +85,7 @@ function Detective:initFurniture()
     self.decoration = {}
 
     for i, v in ipairs(propertyMap) do
-        local dt = {}
-        table.merge(dt, eh_FurnitureCfg[v.name])
+        local dt = table.clone(eh_FurnitureCfg[v.name])
         table.merge(dt, v)
         dt.texture = dt.frames and dt.frames[v.frame or 1] or dt[v.frame or 1]
         dt.x = self.tiles[v.row][v.col].x
@@ -119,19 +121,24 @@ function Detective:initActors()
     self.actors = {}
 
     -- detective
-    local dtvCfg = mapConfig["detective"..self.gameTurn]
+    local dtvCfg = table.clone(mapConfig["detective"..self.gameTurn])
     dtvCfg.x = self.tiles[dtvCfg.row][dtvCfg.col].x
     dtvCfg.y = self.tiles[dtvCfg.row][dtvCfg.col].y - size/3
     self.actors[1] = Actor.new("detective", dtvCfg)
 
     -- thief
-    local tfCfg = mapConfig["thief"..self.gameTurn]
+    local tfCfg = table.clone(mapConfig["thief"..self.gameTurn])
     tfCfg.x = self.tiles[tfCfg.row][tfCfg.col].x
     tfCfg.y = self.tiles[tfCfg.row][tfCfg.col].y - size/3
     self.actors[2] = Actor.new("thief", tfCfg)
 
-    self.currentActor = self.actors[1]
+    self.currentActor = self.actors[2]
     self.currentActor:resetMoves()
+    -- calculate the offset
+    local oRow = -self.currentActor.row
+    local oCol = -self.currentActor.col
+    -- move the camera
+    self:moveCamera(oCol, oRow)
 end
 
 -- check the property can move 2 tile
@@ -144,7 +151,7 @@ function Detective:isPropertyCanMove2Tile(property, oRow, oCol)
         local rows = self.tiles[v[1]]
         local nextTile = rows and rows[v[2]]
         if not nextTile or not nextTile:canPutFurniture() then
-            -- eh_append2Output("tile is can not put property")
+            eh_append2Output("tile is can not put property")
             return false
         end
 
@@ -157,6 +164,7 @@ function Detective:isPropertyCanMove2Tile(property, oRow, oCol)
 end
 
 function Detective:moveActor(oCol, oRow)
+    if not self.currentActor:hasMoves() then return end
     -- check the next tile that actor is going is walkable
     -- if not, return
     local rows = self.tiles[self.currentActor.row+oRow]
@@ -199,6 +207,7 @@ function Detective:moveActor(oCol, oRow)
                 end
             end
             facingProperty:move(oCol*size, oRow*size, oRow, oCol)
+            love.audio.play(eh_Sound[4])
             for h = facingProperty.row, facingProperty.row-facingProperty.height+1, -1 do
                 if not self.furnitureMap[h] then 
                     self.furnitureMap[h] = {}
@@ -207,35 +216,21 @@ function Detective:moveActor(oCol, oRow)
                     self.furnitureMap[h][w] = facingProperty
                 end
             end
-            self.currentActor:reduceMoves()
+            -- self.currentActor:reduceMoves()
 
             -- if key is under this furniture, show it
             if keyTile then
-                eh_append2Output("has Key!!!")
+                eh_append2Output("show the Key!!!")
                 keyTile:showKey(self.currentActor)
             end
+        else
+            eh_append2Output("no facingProperty")
         end
     end
 
-    -- -- 还需要选择家具 获取row, col为中心的四个格子的家具。旋转他们
-    -- local nowRow = self.currentActor.row
-    -- local nowCol = self.currentActor.col
-    -- local furnitureNearby = {
-    --     self.furnitureMap[nowRow-1] and self.furnitureMap[nowRow-1][nowCol],
-    --     self.furnitureMap[nowRow+1] and self.furnitureMap[nowRow+1][nowCol],
-    --     self.furnitureMap[nowRow] and self.furnitureMap[nowRow][nowCol-1],
-    --     self.furnitureMap[nowRow] and self.furnitureMap[nowRow][nowCol+1]
-    -- }
-    -- for k, fur in pairs(furnitureNearby) do
-    --     if fur ~= facingProperty then
-    --         fur:rotate()
-    --     end
-    -- end
-
-
     -- move actor to the next tile
     self.currentActor:move(oCol*size, oRow*size, oRow, oCol, not self.pressedA)
-
+    self.currentActor:reduceMoves()
     -- move the camera meanwhile.
     local edgeDis = size*2
     if (oCol > 0 and self.currentActor.x > eh_screen.width-edgeDis)
@@ -314,15 +309,15 @@ function Detective:shiftActor()
         return false
     end
 
-    local isTwoMet = self.actors[1]:hasSameHidenTile(self.actors[2].hidenTile)
-    if isTwoMet then
-        self:gameEnd("detective")
-        return
-    end
-
     if self.currentActor.name == "thief" and tile:hasKey() then
         tile.property:touchKey(self.currentActor)
         self:gameEnd("thief")
+        return
+    end
+
+    local isTwoMet = self.actors[1]:hasSameHidenTile(self.actors[2].hidenTile)
+    if isTwoMet then
+        self:gameEnd("detective")
         return
     end
 
@@ -332,6 +327,7 @@ function Detective:shiftActor()
         if v ~= self.currentActor then
             self.currentActor = v
             self.currentActor:resetMoves()
+            self.tiles[self.currentActor.row][self.currentActor.col]:clearHide()
             break
         end
     end
@@ -354,8 +350,10 @@ function Detective:gameEnd(winner)
     self.winner = winner
     if winner == "detective" then
         self.winCnts[1] = self.winCnts[1] + 1
+        love.audio.play(eh_Sound[5])
     else
         self.winCnts[2] = self.winCnts[2] + 1
+        love.audio.play(eh_Sound[6])
     end
 end
 
@@ -379,15 +377,17 @@ function Detective:draw()
     if not self:isRunning() then return end
 
     if self.canRestart then
-        love.graphics.draw(eh_UITexture["ret_"..self.winner], 110, 45)
+        love.graphics.draw(eh_UITexture[self.winner.."_win"], 120, 45)
         love.graphics.draw(eh_UITexture[self.winner.."_big"], 123, 75)
         love.graphics.draw(eh_UITexture["ret_light"], 85, 0)
-        love.graphics.print("press 'enter' to restart.")
+        love.graphics.print("press 'START' to restart.")
         return
     end
     -- shiftint actor
     if self.shiftClicked then 
-        love.graphics.print("shift to another player...\npress 'space' again when shifting finished.")
+        love.graphics.print("shift to another player...\npress 'SELECT' again when shifting finished.")
+        love.graphics.draw(eh_UITexture["ret_"..self.currentActor.name], 110, 45)
+        love.graphics.draw(eh_UITexture[self.currentActor.name.."_big"], 123, 75)
         return 
     end
 
@@ -408,7 +408,7 @@ function Detective:draw()
     -- lower row, higher priority.
     local tmps = {}
     -- actors
-    if self.isGameEnd then
+    if self.isGameEnd and self.winner == "detective" then
         for i, actor in ipairs(self.actors) do
             table.insert(tmps, actor)
         end
@@ -438,6 +438,10 @@ function Detective:draw()
     love.graphics.print(self.currentActor.moves, 72, 0)
     love.graphics.print(self.currentActor.propertyCnt[1], 250, 0)
     love.graphics.print(self.currentActor.propertyCnt[2], 292, 0)
+
+    if self.initStart then
+        love.graphics.draw(eh_UITexture.start_logo, 0, 0)
+    end
 end
 
 ------- key events
@@ -445,24 +449,28 @@ function Detective:keypressed(key)
     if self.shiftClicked then return end
 
     -- eh_append2Output("pressed "..key)
-    if key == "a" then
+    if key == keys.A then
         self.pressedA = true
-    elseif key == "z" then
+    elseif key == keys.Y then
         self.pressedY = true
         self.currentActor:chooseProp(0)
     end
 end
 
 function Detective:keyreleased(key)
-    if key == "escape" then
+    if key == keys.Quit then
         self:stopScene()
-    elseif (key == "return" or key == "enter") and self.canRestart then
-        self:resetGame() -- restart
+    elseif (key == keys.Start or key == "enter") then
+        if self.canRestart then
+            self:resetGame() -- restart
+        elseif self.initStart then
+            self.initStart = false
+        end
     end
 
-    if self.isGameEnd then return end
+    if self.isGameEnd or self.initStart then return end
 
-    if key == "space" then -- shitf 2 another actor
+    if key == keys.Select then -- shitf 2 another actor
         if not self.shiftClicked then
             self.shiftClicked = self:shiftActor()
         else
@@ -472,47 +480,47 @@ function Detective:keyreleased(key)
 
     -- no key event can be replied until shifting is finished
     if self.shiftClicked then return end
-    if key == "up" then
+    if key == keys.DPad_up then
         if not self.pressedY then
             self:moveActor(0, -1)
         end
-    elseif key == "down" then
+    elseif key == keys.DPad_down then
         if not self.pressedY then
             self:moveActor(0, 1)
         end
-    elseif key == "right" then
+    elseif key == keys.DPad_right then
         if self.pressedY then
             self.currentActor:chooseProp(1)
         else
             self:moveActor(1, 0)
         end
-    elseif key == "left" then
+    elseif key == keys.DPad_left then
         if self.pressedY then
             self.currentActor:chooseProp(-1)
         else
             self:moveActor(-1, 0)
         end
-    elseif key == "a" then
+    elseif key == keys.A then
         self.pressedA = false
-    elseif key == "z" then
+    elseif key == keys.Y then
         self.pressedY = false
         self.currentActor:putPropertyOnTile(self.tiles[self.currentActor.row][self.currentActor.col])
-    elseif key == "x" then
+    elseif key == keys.X then
         local tile = self.tiles[self.currentActor.row][self.currentActor.col]
         local searchSucc = self.currentActor:searchTile(tile)
         if searchSucc then
             local another = self.currentActor == self.actors[1] and self.actors[2] or self.actors[1]
-            local isTwoMet = another:hasSameHidenTile(tile)
-            if isTwoMet then
-                self:gameEnd("detective")
-            end
-            
             -- is key
             if tile:hasKey() then
                 tile.property:touchKey(self.currentActor)
                 if self.currentActor.name == "thief"  then
                     self:gameEnd("thief")
                 end
+            end
+
+            local isTwoMet = another:hasSameHidenTile(tile)
+            if isTwoMet then
+                self:gameEnd("detective")
             end
         end
     end

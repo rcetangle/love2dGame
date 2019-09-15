@@ -102,8 +102,7 @@ function Detective:initFurniture()
     self.furnitureMap = {}
     self.decoration = {}
     for i, v in ipairs(propertyMap) do
-        local dt = {}
-        table.merge(dt, eh_FurnitureCfg[v.name])
+        local dt = table.clone(eh_FurnitureCfg[v.name])
         table.merge(dt, v)
         dt.texture = dt.frames and dt.frames[v.frame or 1] or dt[v.frame or 1]
         dt.x = self.tiles[v.row][v.col].x

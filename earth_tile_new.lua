@@ -31,12 +31,23 @@ end
 function Tile:draw(actor)
     if not self.texture then return end
     love.graphics.draw(self.texture, self.x, self.y)
-    if self.state == TileState.HIDDEN and actor ~= self.byWhom and self.upperTexture then
-        love.graphics.draw(self.upperTexture, self.x, self.y)
-        return
-    end
-    if self.state == TileState.BLACK and self.upperTexture then
-        love.graphics.draw(self.upperTexture, self.x, self.y)
+    if self.upperTexture then
+        -- hidden by actor
+        if self.state == TileState.HIDDEN and self.byWhom and actor ~= self.byWhom then
+            love.graphics.draw(self.upperTexture, self.x, self.y)
+            return
+        -- hidden for key
+        elseif self.state == TileState.HIDDEN and self:hasKey() and actor ~= self.property.byWhom then
+            love.graphics.draw(self.upperTexture, self.x, self.y)
+            return
+        -- hidden unused property
+        elseif self.state == TileState.HIDDEN and self.property and actor ~= self.property.byWhom then
+            love.graphics.draw(self.upperTexture, self.x, self.y)
+            return
+        -- for black
+        elseif self.state == TileState.BLACK then
+            love.graphics.draw(self.upperTexture, self.x, self.y)
+        end
     end
     -- love.graphics.print(self.row..","..self.col, self.x, self.y)
     if self.property then
@@ -46,7 +57,7 @@ end
 
 -- can put property on the tile
 function Tile:canPutProperty()
-    return self.state == TileState.LIGHT or self.state == TileState.BLACK
+    return self.state == TileState.BLACK or (self.state == TileState.LIGHT and not self:hasKey())
 end
 
 -- can put furniture on the tile
@@ -61,7 +72,7 @@ end
 
 -- is the tile searchable
 function Tile:canSearch()
-    return self.state == TileState.HIDDEN or self.state == TileState.BLACK
+    return self.state == TileState.HIDDEN or self.state == TileState.BLACK or (self.state == TileState.LIGHT and self:hasKey())
 end
 
 -- is the tile lightenable
@@ -71,9 +82,8 @@ end
 
 -- is the tile hidable
 function Tile:canHide(actor)
-    return self.state == TileState.LIGHT 
-        or self.state == TileState.BLACK
-        or (self.state == TileState.HIDDEN and self.byWhom == actor)
+    return self.state ~= TileState.NONE--self.state == TileState.LIGHT 
+        -- or self.state == TileState.BLACK
 end
 
 function Tile:hide(actor)
@@ -83,6 +93,9 @@ function Tile:hide(actor)
 end
 
 function Tile:clearHide()
+    if self.state == TileState.HIDDEN and self.property and self.property.state ~= 1 then
+        return
+    end
     self.state = TileState.LIGHT
     self.byWhom = nil
 end
@@ -96,7 +109,6 @@ function Tile:putProperty(property)
     self.property.col = self.col
 
     self.state = property:isKey() and TileState.LIGHT or TileState.HIDDEN
-    self.byWhom = property.byWhom
     self.upperTexture = eh_TileTexture[2]
 end
 
@@ -130,7 +142,6 @@ end
 
 function Tile:showKey(actor)
     self.state = TileState.HIDDEN
-    -- self.byWhom = actor
     self.upperTexture = eh_TileTexture[2]
     self.property:touchKey(actor)
 end

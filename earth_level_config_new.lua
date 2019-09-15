@@ -81,13 +81,25 @@ eh_UITexture = {
 	num_3 = love.graphics.newImage("assets/earth/3.png"),
 	detective = love.graphics.newImage("assets/earth/detective_icon1.png"),
 	detective_big = love.graphics.newImage("assets/earth/detective_big.png"),
+	detective_win = love.graphics.newImage("assets/earth/detective_win.png"),
 	ret_detective = love.graphics.newImage("assets/earth/ret_detective.png"),
 	ret_light = love.graphics.newImage("assets/earth/ret_light.png"),
 	ret_thief = love.graphics.newImage("assets/earth/ret_thief.png"),
+	thief_win = love.graphics.newImage("assets/earth/thief_win.png"),
 	thief = love.graphics.newImage("assets/earth/thief_icon1.png"),
-	thief_big = love.graphics.newImage("assets/earth/thief_big.png"),
+    thief_big = love.graphics.newImage("assets/earth/thief_big.png"),
+    start_logo = love.graphics.newImage("assets/earth/title.png"),
 }
 
+eh_Sound = {
+    love.audio.newSource("assets/earth/lighten.wav", "static"),
+    love.audio.newSource("assets/earth/hurtByProp.wav", "static"),
+    love.audio.newSource("assets/earth/putProp.wav", "static"),
+    love.audio.newSource("assets/earth/moveFur.wav", "static"),
+    love.audio.newSource("assets/earth/detective_win.ogg", "static"),
+    love.audio.newSource("assets/earth/thief_win.wav", "static"),    
+    love.audio.newSource("assets/earth/bg.wav", "stream"),    
+}
 --------------------------------
 -------- map1 18*5
 level_config.tileMap1 = {
@@ -95,9 +107,9 @@ level_config.tileMap1 = {
 	{-3,-2,-2,-2,-2,-2,-2,-2,-3,-2,-2,-2,-2,-2,-2,-2,-3},
     {-3,-1,-1,-1,-1,-1,-1,-1,-4,-1,-1,-1,-1,-1,-1,-1,-3},
     {-3, 1, 1, 1, 1, 1, 1, 1,-5, 1, 1, 1, 1, 1, 1, 1,-3},
-    {-3, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
-    {-3, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1,-3},
-    {-3, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1,-3},
+    {-3, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
+    {-3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
+    {-3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1,-3},
 }
 
 level_config.tileTexture1 = {
@@ -206,18 +218,18 @@ level_config.propertyMap1 = {
 }
 
 level_config.detective1 = {
-	moves = {1, 3, 5}, 
-    property = {4, 15},
-    propertyHurt = {2, 0},
+	moves = {8}, 
+    property = {4, 10},
+    propertyHurt = {4, 0},
  
     row = 3,
     col = 2,	
 }
 
 level_config.thief1 = {
-	moves = {1, 3, 5}, 
-    property = {4, 15},
-    propertyHurt = {2, 0},
+	moves = {10}, 
+    property = {5, 15},
+    propertyHurt = {4, 0},
  
     row = 6,
     col = 16,
@@ -232,9 +244,9 @@ level_config.tileMap2 = {
 	{-3,-2,-2,-2,-2,-2,-2,-2,-3,-2,-2,-2,-2,-2,-2,-2,-3,-2,-2,-2,-2,-2,-2,-2,-3},
     {-3,-1,-1,-1,-1,-1,-1,-1,-3,-1,-1,-1,-1,-1,-1,-1,-3,-1,-1,-1,-1,-1,-1,-1,-3},
     {-3, 1, 1, 1, 1, 1, 1, 1,-4, 1, 1, 1, 1, 1, 1, 1,-4, 1, 1, 1, 1, 1, 1, 1,-3},
-    {-3, 1, 1, 0, 1, 0, 1, 1,-5, 1, 1, 1, 1, 1, 1, 1,-5, 1, 0, 1, 0, 1, 1, 1,-3},
-    {-3, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1,-3},
-    {-3, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
+    {-3, 1, 1, 0, 1, 1, 1, 1,-5, 1, 1, 1, 1, 1, 1, 1,-5, 1, 1, 1, 1, 1, 1, 1,-3},
+    {-3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1,-3},
+    {-3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
 }
 
 level_config.tileTexture2 = {
@@ -405,34 +417,33 @@ level_config.propertyMap2 = {
 }
 
 level_config.detective2 = {
-	moves = {1, 3, 5}, 
-    property = {5, 25},
-    propertyHurt = {2, 0},
+	moves = {11}, 
+    property = {5, 18},
+    propertyHurt = {4, 0},
  
-    row = 3,
-    col = 7,	
+    row = 5,
+    col = 4,	
 }
 
 level_config.thief2 = {
-	moves = {1, 3, 5}, 
-    property = {5, 25},
-    propertyHurt = {2, 0},
+	moves = {14}, 
+    property = {6, 25},
+    propertyHurt = {4, 0},
  
-    row = 6,
-    col = 19,
+    row = 4,
+    col = 21,
 }
 
 
 
 
 --------------------------------
--------- map3 16*7
-
+-------- map3 24*9
 level_config.tileTexture3 = {
     -- floors
-    love.graphics.newImage("assets/earth3/0.png"),
     love.graphics.newImage("assets/earth3/1.png"),
-    love.graphics.newImage("assets/earth3/2.png"),
+    love.graphics.newImage("assets/earth/black2.png"),
+    love.graphics.newImage("assets/earth/light.png"),
 
     -- walls
     love.graphics.newImage("assets/earth3/wall_5.png"),
@@ -442,22 +453,206 @@ level_config.tileTexture3 = {
     love.graphics.newImage("assets/earth3/wall_1.png"),
 }
 
+level_config.tileMap3 = {
+    --	 1	2	3 4	 5	6 	7 8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 
+        {-3,-2,-2,-2,-2,-2,-2,-3,-2,-2,-2,-2,-2,-2,-2,-2,-3,-2,-2,-2,-2,-2,-2,-3},
+        {-3,-1,-1,-1,-1,-1,-1,-3,-1,-1,-1,-1,-1,-1,-1,-1,-3,-1,-1,-1,-1,-1,-1,-3},
+        {-3, 1, 1, 1, 1, 1, 1,-4, 1, 1, 1, 1, 1, 1, 1, 1,-4, 1, 1, 1, 1, 1, 1,-3},
+        {-3, 1, 1, 1, 1, 0, 1,-5, 1, 1, 1, 1, 1, 1, 1, 1,-5, 1, 1, 1, 1, 1, 1,-3},
+        {-3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
+        {-3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
+        {-3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
+        {-3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1,-3},
+}
+
+level_config.furnitureCfg3 = {
+    -- furniture
+    closet = {
+        state = "TURN_N_MOVE",
+        frames = {
+            love.graphics.newImage("assets/earth1/closet_f.png"), 
+            love.graphics.newImage("assets/earth1/closet_l.png"), 
+            love.graphics.newImage("assets/earth1/closet_b.png")
+        }
+    },
+    closet2 =  {
+        state = "TURN_N_MOVE",
+        frames = {
+        love.graphics.newImage("assets/earth2/2Closet_f.png"),  
+        love.graphics.newImage("assets/earth2/2Closet_l.png"), 
+        love.graphics.newImage("assets/earth2/2Closet_b.png"), 
+        }
+    },
+    chair = {
+        state = "TURN_N_MOVE",
+        frames = {
+        love.graphics.newImage("assets/earth3/chair_f.png"),
+        love.graphics.newImage("assets/earth3/chair_l.png"),
+        love.graphics.newImage("assets/earth3/chair_b.png"),
+        love.graphics.newImage("assets/earth3/chair_r.png"),
+        }
+    },
+    sofa = {
+        width = 2, height = 1, state = "MOVE",
+        frames = {
+        love.graphics.newImage("assets/earth3/sofa_f.png"),
+        love.graphics.newImage("assets/earth3/sofa_b.png"),
+        }
+    },
+    sofa2 = {
+        width = 1, height = 2, state = "MOVE",
+        frames = {
+        love.graphics.newImage("assets/earth3/sofa_l.png"),
+        }
+    },
+    desk = {  
+        width = 2, height = 1, state = "MOVE",
+        frames = {
+        love.graphics.newImage("assets/earth3/desk_f.png"),
+        love.graphics.newImage("assets/earth3/desk_b.png"),
+        }
+    },
+    desk2 = {  
+        width = 1, height = 2, state = "MOVE",
+        frames = {
+        love.graphics.newImage("assets/earth3/desk_l.png"),
+        }
+    },
+    device = {
+    	state = "MOVE",
+        frames = {
+        love.graphics.newImage("assets/earth3/device_f.png"),
+        love.graphics.newImage("assets/earth3/device_l.png"),
+        love.graphics.newImage("assets/earth3/device_b.png"),
+        }
+    },
+    closet3 = {
+        width = 2, height = 1, state = "MOVE",
+        frames = {
+            love.graphics.newImage("assets/earth3/4Closet_f.png"),
+            love.graphics.newImage("assets/earth3/4Closet_b.png"),
+        }
+    },	
+    closet4 = {
+        width = 1, height = 2, state = "MOVE",
+        frames = {
+            love.graphics.newImage("assets/earth3/4Closet_l.png"),
+        }
+    },
+    piano = {
+        width = 2, height = 2, state = "MOVE",
+        frames = {
+            love.graphics.newImage("assets/earth3/piano_f.png"),
+            love.graphics.newImage("assets/earth3/piano_l.png"),
+            love.graphics.newImage("assets/earth3/piano_b.png"),
+        }
+    },
+    plant = {
+        state = "MOVE",
+        frames = {
+            love.graphics.newImage("assets/earth3/flower.png"),
+            love.graphics.newImage("assets/earth3/light.png"),
+        }
+    },
+    ball = {
+        width = 2, height = 1, state = "MOVE",
+        frames = {
+            love.graphics.newImage("assets/earth3/ball.png"),
+        }
+    },
+    wall = {
+    	width = 0, height = 2,
+	    love.graphics.newImage("assets/earth3/wall_6.png"),
+    },
+    -- decoration
+    decoration = {
+        love.graphics.newImage("assets/earth3/deer_f.png"),
+        love.graphics.newImage("assets/earth3/deer_l.png"),
+        love.graphics.newImage("assets/earth3/fire.png"),
+        love.graphics.newImage("assets/earth3/pic_b1.png"),
+        love.graphics.newImage("assets/earth3/pic_b2.png"),
+        love.graphics.newImage("assets/earth3/clock.png"),
+        love.graphics.newImage("assets/earth3/carpet.png"),
+        love.graphics.newImage("assets/earth3/window.png"),
+        love.graphics.newImage("assets/earth3/window2.png"),
+    }
+}
+
+level_config.propertyMap3 = {
+	-- wall's
+	{row=1, col=5, name="decoration", frame=9},
+	{row=1, col=7, name="decoration", frame=6},
+	{row=1, col=10, name="decoration", frame=9},
+	{row=2, col=12, name="decoration", frame=3},
+	{row=1, col=15, name="decoration", frame=4},
+	{row=1, col=16, name="decoration", frame=5},
+	{row=1, col=21, name="decoration", frame=7},
+	{row=3, col=17, name="decoration"},
+	{row=3, col=8, name="decoration"},
+
+	-- furniture
+	{row=3, col=2, name="closet3"},
+	{row=3, col=4, name="closet3"},
+    {row=3, col=7, name="device"},
+	{row=5, col=2, name="closet4"},
+	{row=7, col=2, name="closet2", frame=2},
+	{row=8, col=2, name="piano", frame=2},
+	{row=5, col=4, name="sofa"},
+	{row=6, col=3, name="chair", frame=4},
+	{row=6, col=6, name="chair", frame=2},
+	{row=6, col=4, name="desk", frame=2},
+	{row=8, col=4, name="chair", frame=2},
+	{row=8, col=7, name="ball"},
+	{row=5, col=8, name="plant"},
+    
+	{row=4, col=9, name="closet4"},
+	{row=4, col=10, name="ball"},
+	{row=3, col=14, name="plant"},
+	{row=3, col=15, name="closet2"},
+	{row=3, col=16, name="closet2"},
+	{row=5, col=9, name="device", frame=2},
+	{row=4, col=12, name="piano"},
+	{row=5, col=15, name="chair", frame=4},
+    {row=5, col=16, name="desk2"},
+    
+	{row=7, col=10, name="chair", frame=4},
+	{row=7, col=12, name="desk", frame=2},
+	{row=7, col=15, name="chair", frame=2},
+	{row=8, col=12, name="sofa", frame=2},
+    {row=8, col=11, name="plant", frame=2},
+	{row=8, col=14, name="device", frame=3},
+    
+	{row=3, col=18, name="device"},
+	{row=3, col=19, name="closet3"},
+	{row=3, col=21, name="plant", frame=2},
+	{row=3, col=22, name="ball"},
+	{row=6, col=18, name="chair", frame=4},
+	{row=5, col=19, name="plant"},
+	{row=5, col=21, name="chair"},
+	{row=5, col=23, name="chair", frame=2},
+	{row=6, col=20, name="desk"},
+	{row=8, col=23, name="closet4"},
+	{row=8, col=19, name="closet", frame=3},
+	{row=8, col=21, name="closet2", frame=3},
+	{row=8, col=22, name="closet2", frame=3},
+}
+
 level_config.detective3 = {
-	moves = {1, 3, 5, 7}, 
-    property = {7, 35},
-    propertyHurt = {2, 0},
+	moves = {14}, 
+    property = {6, 25},
+    propertyHurt = {4, 0},
  
-    row = 3,
-    col = 2,	
+    row = 5,
+    col = 6,	
 }
 
 level_config.thief3 = {
-	moves = {1, 3, 5, 7}, 
+	moves = {18}, 
     property = {7, 35},
-    propertyHurt = {2, 0},
+    propertyHurt = {4, 0},
  
-    row = 6,
-    col = 13,
+    row = 8,
+    col = 18,
 }
 
 return level_config

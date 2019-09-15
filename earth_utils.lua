@@ -4,6 +4,24 @@ function table.merge( tDest, tSrc )
     end
 end
 
+
+function table.clone(org)
+    local function copy(org, res)
+        for k,v in pairs(org) do
+            if type(v) ~= "table" then
+                res[k] = v;
+            else
+                res[k] = {};
+                copy(v, res[k])
+            end
+        end
+    end
+ 
+    local res = {}
+    copy(org, res)
+    return res
+end
+
 function eh_safeCallFunc(func, ...)
     if func and type(func) == "function" then
         func(...)

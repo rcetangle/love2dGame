@@ -21,6 +21,7 @@ function Scene:setStateStop()
 end
 
 function Scene:stopScene()
+    love.audio.stop()
     eh_safeCallFunc(self.callback)
 end
 

@@ -86,15 +86,16 @@ function Actor:searchTile(tile)
         return false 
     end
     if tile:canSearch() then
-        self:reduceMoves()
-        tile:clearHide()
-        table.insert(self.searchedTiles, tile)
-
         -- actor hurt by a property
         if tile:hasProperty() then 
-            eh_append2Output("actor hurt by property!")
             self:hurtByProperty(tile:getProperty())
+        else
+            love.audio.play(eh_Sound[1])
         end
+
+        tile:clearHide()
+        self:reduceMoves()
+        table.insert(self.searchedTiles, tile)
         return true
     else
         eh_append2Output("tile is unsearchable.")
@@ -113,11 +114,14 @@ end
 
 function Actor:hideOnTile(tile)
     local canHide = tile:canHide(self)
+    local isHurt = false
     if canHide then
-        if self.hidenTile then
-            self.hidenTile:clearHide()
-        end
         self.hidenTile = tile
+
+        -- actor hurt by a property
+        if tile:hasProperty() then 
+            isHurt = self:hurtByProperty(tile:getProperty())
+        end
         tile:hide(self)
 
         -- reset actor direction
@@ -125,7 +129,7 @@ function Actor:hideOnTile(tile)
         self.stepCnt = 1
         self:updateTexture()
     end
-    return canHide
+    return canHide, isHurt
 end
 
 function Actor:hasSameHidenTile(tile)
@@ -135,11 +139,13 @@ end
 function Actor:hurtByProperty(property)
     local hurt = property:touchActor(self)
     self:reduceNextRoundMoves(hurt)
-    if hurt > 1 then
+    if hurt >= 1 then
         -- 这里要播放角色受伤的动画
-        eh_append2Output("actor is hurt!!!!! "..hurt)
+        eh_append2Output("actor is hurt by prop!!!!! "..hurt)
         self.texture = self.textures[self.face][4]
+        love.audio.play(eh_Sound[2])
     end
+    return hurt >= 1
 end
 
 -- put property on the tile,
@@ -163,6 +169,7 @@ function Actor:putPropertyOnTile(tile)
         })
         tile:putProperty(newProperty)
         self:reduceMoves()
+        love.audio.play(eh_Sound[3])
         return true
     end
     eh_append2Output("actor cannot put property")
