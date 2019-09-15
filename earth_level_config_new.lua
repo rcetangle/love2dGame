@@ -96,7 +96,7 @@ level_config.tileMap1 = {
     {-3,-1,-1,-1,-1,-1,-1,-1,-4,-1,-1,-1,-1,-1,-1,-1,-3},
     {-3, 1, 1, 1, 1, 1, 1, 1,-5, 1, 1, 1, 1, 1, 1, 1,-3},
     {-3, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
-    {-3, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1,-3},
+    {-3, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1,-3},
     {-3, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1,-3},
 }
 
@@ -228,13 +228,13 @@ level_config.thief1 = {
 --------------------------------
 -------- map2 25*6
 level_config.tileMap2 = {
---	 1	2	3 4	 5	6 	7 8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23
-	{-3,-2,-2,-2,-2,-2,-2,-2,-3,-2,-2,-2,-2,-2,-2,-2,-3,-2,-2,-2,-2,-2,-3},
-    {-3,-1,-1,-1,-1,-1,-1,-1,-3,-1,-1,-1,-1,-1,-1,-1,-3,-1,-1,-1,-1,-1,-3},
-    {-3, 1, 1, 1, 1, 1, 1, 1,-4, 1, 1, 1, 1, 1, 1, 1,-4, 1, 1, 1, 1, 1,-3},
-    {-3, 1, 1, 1, 1, 1, 1, 1,-5, 1, 1, 1, 1, 1, 1, 1,-5, 1, 1, 1, 1, 1,-3},
-    {-3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
-    {-3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
+--	 1	2	3 4	 5	6 	7 8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
+	{-3,-2,-2,-2,-2,-2,-2,-2,-3,-2,-2,-2,-2,-2,-2,-2,-3,-2,-2,-2,-2,-2,-2,-2,-3},
+    {-3,-1,-1,-1,-1,-1,-1,-1,-3,-1,-1,-1,-1,-1,-1,-1,-3,-1,-1,-1,-1,-1,-1,-1,-3},
+    {-3, 1, 1, 1, 1, 1, 1, 1,-4, 1, 1, 1, 1, 1, 1, 1,-4, 1, 1, 1, 1, 1, 1, 1,-3},
+    {-3, 1, 1, 0, 1, 0, 1, 1,-5, 1, 1, 1, 1, 1, 1, 1,-5, 1, 0, 1, 0, 1, 1, 1,-3},
+    {-3, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1,-3},
+    {-3, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,-3},
 }
 
 level_config.tileTexture2 = {
@@ -283,6 +283,12 @@ level_config.furnitureCfg2 = {
         frames = {
         love.graphics.newImage("assets/earth2/sofa_f.png"),
         love.graphics.newImage("assets/earth2/sofa_b.png"),
+        }
+    },
+    sofa2 = {
+        width = 1, height = 2, state = "MOVE",
+        frames = {
+        love.graphics.newImage("assets/earth2/sofa_l.png"),
         }
     },
     desk = {  
@@ -339,80 +345,72 @@ level_config.furnitureCfg2 = {
 
 level_config.propertyMap2 = {
 	-- wall's
-	{row=1, col=5, name="decoration", frame=3},
+	{row=1, col=4, name="decoration"},
+	{row=1, col=5, name="decoration", frame=2},
 	{row=1, col=6, name="decoration", frame=6},
-	{row=1, col=10, name="decoration", frame=6},
-	{row=1, col=11, name="decoration", frame=4},
+	{row=1, col=7, name="decoration", frame=3},
+	{row=1, col=11, name="decoration", frame=6},
 	{row=1, col=12, name="decoration", frame=2},
+	{row=1, col=13, name="decoration", frame=4},
+	{row=1, col=14, name="decoration", frame=3},
+	{row=1, col=15, name="decoration", frame=6},
 	{row=1, col=18, name="decoration", frame=2},
-	{row=1, col=19, name="decoration", frame=6},
-	{row=1, col=21, name="decoration", frame=1},
-	{row=1, col=23, name="decoration", frame=3},
 
 	-- floor's
-	{row=8, col=4, name="decoration", frame=5},
-	{row=5, col=13, name="decoration", frame=5},
-	{row=6, col=19, name="decoration", frame=5},
+	-- {row=8, col=4, name="decoration", frame=5},
+	-- {row=5, col=13, name="decoration", frame=5},
+	-- {row=6, col=19, name="decoration", frame=5},
 
 	-- furniture
-	{row=3, col=3, name="closet3"},
-	-- {row=3, col=5, name="closet"},
+	{row=3, col=2, name="closet3"},
+	{row=3, col=4, name="closet2"},
+	{row=3, col=5, name="closet2"},
 	{row=3, col=6, name="plant", frame=2},
-	{row=3, col=8, name="closet3"},
+	{row=3, col=8, name="closet2", frame=2},
+	-- {row=4, col=8, name="closet2", frame=2},
+	{row=5, col=2, name="sofa2"},
+	{row=5, col=3, name="desk2", frame=2},
+	{row=6, col=2, name="plant"},
+	{row=5, col=9, name="plant", frame=2},
+	{row=6, col=7, name="desk2", frame=2},
+    {row=6, col=6, name="sofa2"},
+    
+    {row=6, col=9, name="wall", frame=2},
+    
 	{row=3, col=10, name="closet2"},
-	{row=3, col=11, name="closet"},
-	{row=3, col=13, name="closet3"},
-	{row=3, col=15, name="closet3"},
-	{row=3, col=18, name="closet2"},
-	{row=3, col=19, name="closet2"},
-	{row=3, col=20, name="closet2"},
-	{row=3, col=21, name="closet2"},
-	{row=3, col=22, name="closet2"},
+	{row=3, col=11, name="closet2"},
+	{row=3, col=15, name="closet2"},
+	{row=3, col=16, name="closet2"},
 
-	{row=4, col=2, name="closet4"},
-	{row=4, col=6, name="chair", frame=4},
-	-- {row=4, col=8, name="closet", frame=3},
-	{row=4, col=14, name="sofa"},
-	{row=4, col=18, name="closet2", frame=2},
-	{row=4, col=22, name="closet2", frame=2},
+	{row=3, col=13, name="chair"},
+	{row=4, col=11, name="chair", frame=4},
+	{row=4, col=14, name="chair", frame=2},
+    {row=5, col=13, name="chair", frame=3},
+    {row=4, col=12, name="desk", frame=2},
 
+	{row=5, col=17, name="plant", frame=2},
+	{row=3, col=18, name="plant"},
+	{row=3, col=19, name="closet3"},
+	{row=3, col=21, name="closet3"},
+	{row=3, col=23, name="closet3"},
+	{row=4, col=22, name="chair", frame=4},
+	{row=4, col=23, name="desk", frame=2},
+	-- {row=5, col=23, name="chair", frame=3},
+	-- {row=5, col=24, name="chair", frame=3},
 
-	{row=5, col=6, name="chair", frame=4},
-	{row=5, col=8, name="closet2", frame=2},
-	-- {row=5, col=13, name="chair", frame=2},
-	{row=5, col=14, name="desk", frame=3},
-	{row=5, col=16, name="chair", frame=4},
-	{row=5, col=20, name="chair"},
-
-	{row=6, col=2, name="closet4"},
-	{row=6, col=15, name="chair", frame=3},
-	{row=6, col=20, name="desk", frame=2},
-
-	{row=7, col=5, name="desk"},
-	{row=7, col=9, name="chair", frame=2},
-	{row=7, col=11, name="chair", frame=4},
-	{row=7, col=20, name="chair", frame=3},
-
-	{row=8, col=2, name="closet4"},
-	{row=8, col=5, name="chair", frame=3},
-	{row=8, col=8, name="plant"},
-	{row=8, col=7, name="wall"},
-	-- {row=8, col=9, name="closet", frame=2},
-	{row=8, col=10, name="desk2", frame=2},
-	{row=8, col=12, name="wall", frame=2},
-	{row=8, col=15, name="closet", frame=2},
-	{row=8, col=16, name="plant"},
-	{row=8, col=17, name="wall"},
+	{row=6, col=20, name="closet2", frame=3},
+	{row=6, col=22, name="closet", frame=3},
+	{row=6, col=23, name="closet2", frame=3},
+	{row=6, col=24, name="closet2", frame=3},
 }
-
 
 level_config.detective2 = {
 	moves = {1, 3, 5}, 
     property = {5, 25},
     propertyHurt = {2, 0},
  
-    row = 4,
-    col = 3,	
+    row = 3,
+    col = 7,	
 }
 
 level_config.thief2 = {
@@ -420,8 +418,8 @@ level_config.thief2 = {
     property = {5, 25},
     propertyHurt = {2, 0},
  
-    row = 8,
-    col = 12,
+    row = 6,
+    col = 19,
 }
 
 
